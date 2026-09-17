@@ -31,6 +31,7 @@ export interface Facture {
   montant_fcfa: number;
   date_service: string;
   date_echeance: string;
+  delai_paiement_jours?: number;
   statut: StatutFacture;
   type_relation: TypeRelation;
   canal_contact: CanalContact;

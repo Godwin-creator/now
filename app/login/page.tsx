@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   LogIn,
   UserPlus,
@@ -207,12 +208,59 @@ export default function LoginPage() {
 
       {/* ── Centre : Carte de Connexion / Inscription ── */}
       <main className="relative z-10 max-w-lg w-full mx-auto px-4 py-6 flex flex-col justify-center">
+        {/* ── Grand Logo en Filigrane (Watermark animé en arrière-plan) ── */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.85, rotate: -4 }}
+          animate={{
+            opacity: [0.04, 0.08, 0.05, 0.04],
+            scale: [1, 1.5, 1.3, 1],
+            rotate: [0, 1.5, -1.5, 0],
+            y: [0, -10, 6, 0],
+          }}
+          transition={{
+            opacity: { duration: 8, repeat: Infinity, ease: 'easeInOut' },
+            scale: { duration: 12, repeat: Infinity, ease: 'easeInOut' },
+            rotate: { duration: 16, repeat: Infinity, ease: 'easeInOut' },
+            y: { duration: 10, repeat: Infinity, ease: 'easeInOut' },
+          }}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[460px] sm:w-[600px] pointer-events-none z-0 select-none overflow-visible"
+        >
+          <Image
+            src="/logo_now.png"
+            alt="Now Background Watermark"
+            width={600}
+            height={600}
+            priority
+            className="w-full h-auto object-contain filter drop-shadow-[0_0_90px_rgba(243,178,41,0.2)] brightness-125"
+          />
+        </motion.div>
+
         {/* En-tête de marque + Typewriter */}
-        <div className="text-center mb-6 space-y-2">
+        <div className="relative z-10 text-center mb-6 space-y-2">
+          {/* Badge logo compact animé */}
+          {/* <motion.div
+            initial={{ opacity: 0, scale: 0.7, y: -12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            className="flex justify-center mb-2"
+          >
+            <div className="relative group p-2 bg-[#1E4D2B]/40 border border-[#F3B229]/40 backdrop-blur-sm shadow-lg">
+              <div className="absolute inset-0 bg-gradient-to-r from-[#1E4D2B] to-[#F3B229] opacity-0 group-hover:opacity-20 transition-opacity" />
+              <Image
+                src="/logo_now.png"
+                alt="Now Logo"
+                width={48}
+                height={48}
+                className="w-10 h-10 sm:w-11 sm:h-11 object-contain"
+                priority
+              />
+            </div>
+          </motion.div> */}
+
           <motion.div
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
           >
             <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white inline-block">
               Now<span className="shimmer-text">.</span>

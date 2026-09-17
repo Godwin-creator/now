@@ -1,17 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { creerCreance } from '@/app/actions/creances'
-import { UserPlus, Users, AlertCircle, CheckCircle2, Zap, ChevronDown } from 'lucide-react'
+import { scannerFacture } from '@/app/actions/ocr'
+import { UserPlus, Users, AlertCircle, CheckCircle2, Zap, ChevronDown, ChevronUp, Camera, ScanLine, Sparkles, X, FileUp } from 'lucide-react'
 import { Client } from '@/types'
 
 export default function CreanceForm({ clientsExistants }: { clientsExistants: Client[] }) {
   const [isNewClient, setIsNewClient]   = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isScanning, setIsScanning]     = useState(false)
+  const [isScanOpen, setIsScanOpen]     = useState(false)
   const [montantInput, setMontantInput] = useState('')
+  const [dateServiceInput, setDateServiceInput] = useState('')
+  const [nomClientInput, setNomClientInput] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [scanSuccess, setScanSuccess] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
 
   const parsedMontant = Number(montantInput.replace(/[^0-9]/g, '')) || 0
 
@@ -24,6 +32,53 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
 
   const setPresetMontant = (amount: number) => {
     setMontantInput(amount.toLocaleString('fr-FR'))
+  }
+
+  // ── OCR Scan Handler ──
+  const handleScanFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsScanning(true)
+    setErrorMessage(null)
+    setScanSuccess(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('facture', file)
+      const result = await scannerFacture(formData)
+
+      if (result.success && result.data) {
+        // Auto-remplir les champs
+        if (result.data.nomClient) {
+          setNomClientInput(result.data.nomClient)
+          // Basculer automatiquement sur "nouveau client" si un nom est détecté
+          setIsNewClient(true)
+        }
+        if (result.data.montantFcfa > 0) {
+          setMontantInput(result.data.montantFcfa.toLocaleString('fr-FR'))
+        }
+        if (result.data.dateService) {
+          setDateServiceInput(result.data.dateService)
+        }
+
+        const filled: string[] = []
+        if (result.data.nomClient) filled.push('Nom')
+        if (result.data.montantFcfa > 0) filled.push('Montant')
+        if (result.data.dateService) filled.push('Date')
+        setScanSuccess(`Extraction réussie : ${filled.join(', ')} détecté${filled.length > 1 ? 's' : ''}`)
+        setTimeout(() => setScanSuccess(null), 5000)
+      } else {
+        setErrorMessage(result.error || "Impossible d'analyser la facture.")
+      }
+    } catch (err: unknown) {
+      setErrorMessage(err instanceof Error ? err.message : "Erreur lors du scan.")
+    } finally {
+      setIsScanning(false)
+      // Reset les file inputs pour permettre de re-scanner le même fichier
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      if (cameraInputRef.current) cameraInputRef.current.value = ''
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -43,6 +98,8 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
         setSuccessMessage("Créance enregistrée avec succès !")
         formElement.reset()
         setMontantInput('')
+        setDateServiceInput('')
+        setNomClientInput('')
         setIsNewClient(false)
         setTimeout(() => setSuccessMessage(null), 4000)
       }
@@ -74,8 +131,146 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
       </div>
 
       <form onSubmit={handleSubmit} className="px-6 py-5 flex flex-col gap-5">
+
+        {/* ── Section Scanner Facture (OCR) Rétractable ── */}
+        <div className="border border-gray-200 bg-gray-50/50">
+          {/* Input caché pour importer un fichier (image ou PDF) */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf,application/pdf"
+            className="hidden"
+            onChange={handleScanFile}
+            disabled={isScanning}
+          />
+          {/* Input caché pour activer la caméra (mobile) */}
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleScanFile}
+            disabled={isScanning}
+          />
+
+          {/* Bouton pour Développer / Réduire la section scan */}
+          <button
+            type="button"
+            onClick={() => setIsScanOpen(!isScanOpen)}
+            className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-100/80 transition-colors select-none cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              <Camera size={15} className="text-[#1E4D2B]" />
+              <span className="text-[11px] font-black text-gray-800 uppercase tracking-wider">
+                Scanner une facture (IA)
+              </span>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 bg-[#F3B229]/20 text-[#8A6000] border border-[#F3B229]/40 uppercase tracking-widest hidden sm:inline-block">
+                Caméra / PDF
+              </span>
+            </div>
+            <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+              <span>{isScanOpen || isScanning ? 'Réduire' : 'Développer'}</span>
+              {isScanOpen || isScanning ? (
+                <ChevronUp size={14} className="text-gray-600" />
+              ) : (
+                <ChevronDown size={14} className="text-gray-600" />
+              )}
+            </div>
+          </button>
+
+          {/* Contenu rétractable */}
+          <AnimatePresence initial={false}>
+            {(isScanOpen || isScanning) && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                className="overflow-hidden border-t border-gray-200"
+              >
+                <div className="p-3.5 space-y-3">
+                  {/* État de scanning actif */}
+                  {isScanning && (
+                    <div className="relative overflow-hidden border-2 border-[#F3B229] bg-[#F3B229]/5 py-4 px-6 flex items-center justify-center gap-3 font-black text-sm uppercase tracking-widest text-[#F3B229]">
+                      <motion.div
+                        initial={{ top: 0 }}
+                        animate={{ top: ['0%', '100%', '0%'] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                        className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#F3B229] to-transparent z-10"
+                      />
+                      <ScanLine size={18} className="animate-pulse" />
+                      <span>Analyse IA en cours…</span>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                        className="w-4 h-4 border-2 border-[#F3B229]/30 border-t-[#F3B229]"
+                      />
+                    </div>
+                  )}
+
+                  {/* Deux boutons côte à côte */}
+                  {!isScanning && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {/* Bouton Caméra */}
+                      <motion.button
+                        type="button"
+                        onClick={() => cameraInputRef.current?.click()}
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.97 }}
+                        className="relative overflow-hidden border-2 border-dashed border-[#1E4D2B]/30 bg-white text-[#1E4D2B] hover:border-[#1E4D2B] hover:bg-[#1E4D2B]/10 transition-all flex flex-col items-center justify-center gap-2 py-4 px-3"
+                      >
+                        <Camera size={22} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Caméra</span>
+                        <span className="text-[8px] font-medium text-gray-400 tracking-wide">Prendre une photo</span>
+                      </motion.button>
+
+                      {/* Bouton Importer */}
+                      <motion.button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.97 }}
+                        className="relative overflow-hidden border-2 border-dashed border-[#F3B229]/40 bg-white text-[#1E4D2B] hover:border-[#F3B229] hover:bg-[#F3B229]/10 transition-all flex flex-col items-center justify-center gap-2 py-4 px-3"
+                      >
+                        <FileUp size={22} className="text-[#8A6000]" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Importer</span>
+                        <span className="text-[8px] font-medium text-gray-400 tracking-wide">Image ou PDF</span>
+                      </motion.button>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-center gap-2 pt-1">
+                    <Sparkles size={10} className="text-[#F3B229]" />
+                    <p className="text-[9px] text-gray-400 text-center font-medium tracking-wide">
+                      Extraction automatique par IA (nom, montant, date)
+                    </p>
+                    <Sparkles size={10} className="text-[#F3B229]" />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
         {/* Alertes */}
         <AnimatePresence>
+          {scanSuccess && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="flex items-center justify-between p-4 bg-[#1E4D2B]/5 border-l-4 border-[#1E4D2B] text-[#1E4D2B] text-xs font-bold"
+            >
+              <div className="flex items-center gap-3">
+                <Sparkles size={15} className="shrink-0 text-[#F3B229]" />
+                {scanSuccess}
+              </div>
+              <button type="button" onClick={() => setScanSuccess(null)} className="text-gray-400 hover:text-gray-600">
+                <X size={14} />
+              </button>
+            </motion.div>
+          )}
           {errorMessage && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -158,7 +353,15 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelClass}>Nom du client *</label>
-                  <input name="nom_client" type="text" required placeholder="ex: Kofi Mensah" className={inputClass} />
+                  <input
+                    name="nom_client"
+                    type="text"
+                    required
+                    placeholder="ex: Kofi Mensah"
+                    value={nomClientInput}
+                    onChange={(e) => setNomClientInput(e.target.value)}
+                    className={`${inputClass} ${nomClientInput ? 'ring-2 ring-[#1E4D2B]/20 border-[#1E4D2B]/40' : ''}`}
+                  />
                 </div>
                 <div>
                   <label className={labelClass}>WhatsApp / Téléphone</label>
@@ -222,7 +425,7 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
                 value={montantInput}
                 onChange={handleMontantChange}
                 placeholder="ex: 150000"
-                className={inputClass}
+                className={`${inputClass} ${montantInput ? 'ring-2 ring-[#1E4D2B]/20 border-[#1E4D2B]/40' : ''}`}
               />
               {/* Raccourcis montants fréquents */}
               <div className="flex items-center gap-1.5 mt-2 flex-wrap">
@@ -240,8 +443,28 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
               </div>
             </div>
             <div>
-              <label className={labelClass}>Date du service *</label>
-              <input name="date_service" type="date" required className={inputClass} />
+              <label className={labelClass}>Date du service rendu *</label>
+              <input
+                name="date_service"
+                type="date"
+                required
+                value={dateServiceInput}
+                onChange={(e) => setDateServiceInput(e.target.value)}
+                className={`${inputClass} ${dateServiceInput ? 'ring-2 ring-[#1E4D2B]/20 border-[#1E4D2B]/40' : ''}`}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Délai de paiement accordé</label>
+              <div className="relative">
+                <select name="delai_paiement_jours" defaultValue="30" className={selectClass}>
+                  <option value="0">0 jour (Comptant)</option>
+                  <option value="15">15 jours</option>
+                  <option value="30">30 jours (Standard)</option>
+                  <option value="45">45 jours</option>
+                  <option value="60">60 jours</option>
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
             </div>
             <div>
               <label className={labelClass}>Type de relation</label>

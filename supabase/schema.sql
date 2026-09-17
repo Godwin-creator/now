@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS public.factures (
   montant_fcfa NUMERIC NOT NULL CHECK (montant_fcfa > 0),
   date_service TIMESTAMPTZ NOT NULL,
   date_echeance TIMESTAMPTZ NOT NULL,
+  delai_paiement_jours INT DEFAULT 30,
   statut TEXT NOT NULL DEFAULT 'en_attente' CHECK (statut IN ('en_attente', 'payee', 'annulee')),
   type_relation TEXT NOT NULL CHECK (type_relation IN ('regulier', 'nouveau', 'difficile')),
   canal_contact TEXT NOT NULL CHECK (canal_contact IN ('whatsapp', 'email', 'sms', 'tel', 'tous')),

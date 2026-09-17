@@ -103,9 +103,15 @@ export async function creerCreance(formData: FormData): Promise<ActionResponse> 
       return { success: false, error: "La date du service rendu est invalide." }
     }
     
-    // Date d'échéance = J+30 automatiquement selon le cahier des charges
+    // Délai de paiement personnalisé dynamique (0, 15, 30, 45, 60 jours...)
+    const delaiPaiementRaw = formData.get('delai_paiement_jours')
+    const delaiPaiement = (delaiPaiementRaw !== null && delaiPaiementRaw !== '')
+      ? Math.max(0, Number(delaiPaiementRaw))
+      : 30
+
+    // Date d'échéance = Date service + délai accordé
     const dateEcheance = new Date(dateService)
-    dateEcheance.setDate(dateEcheance.getDate() + 30)
+    dateEcheance.setDate(dateEcheance.getDate() + delaiPaiement)
 
     // Calcul des jours de retard réels par rapport à l'échéance
     const maintenant = new Date()
@@ -142,33 +148,37 @@ export async function creerCreance(formData: FormData): Promise<ActionResponse> 
     )
 
     // 5. Insertion sécurisée de la facture
-    let { error: factureError } = await supabase.from('factures').insert({
+    const insertPayload: Record<string, any> = {
       company_id: user.id,
       client_id: clientId,
       montant_fcfa: montant,
       date_service: dateService.toISOString(),
       date_echeance: dateEcheance.toISOString(),
+      delai_paiement_jours: delaiPaiement,
       type_relation: relationValide,
       canal_contact: canalValide,
       score_risque: score,
       niveau_risque: niveau,
       statut: 'en_attente'
-    })
+    }
 
-    // Sécurité: Si la contrainte CHECK de la base distante n'a pas encore été mise à jour pour 'tous'
-    if (factureError && factureError.message?.includes('factures_canal_contact_check') && canalValide === 'tous') {
-      const fallback = await supabase.from('factures').insert({
+    let { error: factureError } = await supabase.from('factures').insert(insertPayload)
+
+    // Sécurité: Si la colonne delai_paiement_jours n'existe pas encore ou contrainte de canal
+    if (factureError && (factureError.message?.includes('delai_paiement_jours') || factureError.message?.includes('factures_canal_contact_check'))) {
+      const fallbackPayload = {
         company_id: user.id,
         client_id: clientId,
         montant_fcfa: montant,
         date_service: dateService.toISOString(),
         date_echeance: dateEcheance.toISOString(),
         type_relation: relationValide,
-        canal_contact: 'whatsapp',
+        canal_contact: canalValide === 'tous' && factureError.message?.includes('factures_canal_contact_check') ? 'whatsapp' : canalValide,
         score_risque: score,
         niveau_risque: niveau,
         statut: 'en_attente'
-      })
+      }
+      const fallback = await supabase.from('factures').insert(fallbackPayload)
       factureError = fallback.error
     }
 
@@ -383,7 +393,7 @@ Rappel ${nomEntreprise}: facture de ${montantFormate} echue le ${dateEcheanceStr
       } else {
         const ai = new GoogleGenAI({ apiKey })
         const response = await ai.models.generateContent({
-          model: 'gemini-1.5-flash',
+          model: 'gemini-3.6-flash',
           contents: prompt
         })
         messageGenere = response.text || ""

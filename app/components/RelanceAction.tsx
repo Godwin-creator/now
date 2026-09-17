@@ -23,6 +23,8 @@ import {
   Scale,
   AlertTriangle,
   ShieldAlert,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 import { CanalContact, Client } from '@/types'
 
@@ -51,7 +53,7 @@ const TONS_CONFIG = [
 export default function RelanceAction({ factureId, canal, niveauRisque, client }: RelanceActionProps) {
   const [selectedCanal, setSelectedCanal] = useState<CanalContact>(canal || 'tous')
   const [selectedTon, setSelectedTon]     = useState<string>('factuel')
-  const [showOptions, setShowOptions]     = useState(true)
+  const [showOptions, setShowOptions]     = useState(false)
   const [loading, setLoading]             = useState(false)
   const [result, setResult]               = useState<{
     message: string
@@ -128,99 +130,128 @@ export default function RelanceAction({ factureId, canal, niveauRisque, client }
       </AnimatePresence>
 
       {/* ── PANNEAU DE CONFIGURATION PRÉ-GÉNÉRATION ── */}
-      <div className="bg-gray-50 border border-gray-200 p-3.5 space-y-3">
-        {/* En-tête avec coordonnées rapides */}
-        <div className="flex items-center justify-between flex-wrap gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-          <span className="flex items-center gap-1.5 text-gray-800">
-            <SlidersHorizontal size={12} className="text-[#1E4D2B]" />
-            Préciser le canal avant génération IA
-          </span>
+      <div className="bg-gray-50 border border-gray-200">
+        {/* En-tête cliquable pour développer/réduire */}
+        <button
+          type="button"
+          onClick={() => setShowOptions(!showOptions)}
+          className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-100/80 transition-colors cursor-pointer select-none"
+        >
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5 text-[11px] font-black text-gray-800 uppercase tracking-wider">
+              <SlidersHorizontal size={13} className="text-[#1E4D2B]" />
+              Préciser le canal avant génération IA
+            </span>
+            <span className="text-[9px] font-bold px-1.5 py-0.5 bg-[#1E4D2B]/10 text-[#1E4D2B] uppercase">
+              {CANAUX_CONFIG.find(c => c.id === selectedCanal)?.label} · {TONS_CONFIG.find(t => t.id === selectedTon)?.label}
+            </span>
+          </div>
+
           <div className="flex items-center gap-2">
             {client?.whatsapp ? (
-              <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 px-1.5 py-0.5 border border-emerald-200">
+              <span className="hidden sm:flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 border border-emerald-200">
                 <UserCheck size={10} /> WA: {client.whatsapp}
               </span>
             ) : null}
             {client?.email ? (
-              <span className="flex items-center gap-1 text-blue-700 bg-blue-50 px-1.5 py-0.5 border border-blue-200">
+              <span className="hidden sm:flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 border border-blue-200">
                 <UserCheck size={10} /> Email
               </span>
             ) : null}
+            <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider pl-1">
+              <span>{showOptions ? 'Réduire' : 'Développer'}</span>
+              {showOptions ? <ChevronUp size={14} className="text-gray-600" /> : <ChevronDown size={14} className="text-gray-600" />}
+            </div>
           </div>
-        </div>
-
-        {/* Sélecteur de canal (Pills dynamiques) */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
-          {CANAUX_CONFIG.map((cfg) => {
-            const Icon = cfg.icon
-            const isSelected = selectedCanal === cfg.id
-            return (
-              <button
-                key={cfg.id}
-                type="button"
-                onClick={() => setSelectedCanal(cfg.id as CanalContact)}
-                className={`flex flex-col items-center justify-center p-2 text-center transition-all ${
-                  isSelected
-                    ? 'bg-[#1E4D2B] text-white border-2 border-[#F3B229] shadow-sm'
-                    : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-100'
-                }`}
-              >
-                <div className="flex items-center gap-1 mb-1">
-                  <Icon size={12} style={{ color: isSelected ? '#F3B229' : cfg.color }} />
-                  <span className="text-[11px] font-black uppercase tracking-wider">{cfg.label}</span>
-                </div>
-                <span className={`text-[9px] line-clamp-1 ${isSelected ? 'text-gray-200' : 'text-gray-400'}`}>
-                  {cfg.desc}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Sélecteur de ton (Amélioration auxiliaire) */}
-        <div className="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-gray-200">
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Ton :</span>
-          <div className="flex gap-1 flex-wrap">
-            {TONS_CONFIG.map((t) => {
-              const TonIcon = t.icon
-              const isSelected = selectedTon === t.id
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setSelectedTon(t.id)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition-all ${
-                    isSelected
-                      ? 'bg-gray-900 text-white border border-gray-900'
-                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
-                  }`}
-                >
-                  <TonIcon size={11} className={isSelected ? 'text-[#F3B229]' : 'text-gray-500'} />
-                  <span>{t.label}</span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Bouton de génération principal */}
-        <button
-          onClick={() => handleGenerate()}
-          disabled={loading}
-          className="btn-primary-sweep flex items-center justify-center gap-2 w-full py-3 text-white font-black text-xs uppercase tracking-widest disabled:opacity-70 transition-all"
-        >
-          {loading ? (
-            <>
-              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white animate-spin" />
-              Génération IA ({CANAUX_CONFIG.find(c => c.id === selectedCanal)?.label})…
-            </>
-          ) : (
-            <>
-              <Sparkles size={14} className="text-[#F3B229]" />
-              {result ? 'Régénérer avec ce canal' : `Générer la relance (${CANAUX_CONFIG.find(c => c.id === selectedCanal)?.label})`}
-            </>
-          )}
         </button>
+
+        {/* Contenu rétractable */}
+        <AnimatePresence initial={false}>
+          {showOptions && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="overflow-hidden border-t border-gray-200"
+            >
+              <div className="p-3.5 space-y-3">
+                {/* Sélecteur de canal (Pills dynamiques) */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                  {CANAUX_CONFIG.map((cfg) => {
+                    const Icon = cfg.icon
+                    const isSelected = selectedCanal === cfg.id
+                    return (
+                      <button
+                        key={cfg.id}
+                        type="button"
+                        onClick={() => setSelectedCanal(cfg.id as CanalContact)}
+                        className={`flex flex-col items-center justify-center p-2 text-center transition-all ${
+                          isSelected
+                            ? 'bg-[#1E4D2B] text-white border-2 border-[#F3B229] shadow-sm'
+                            : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1 mb-1">
+                          <Icon size={12} style={{ color: isSelected ? '#F3B229' : cfg.color }} />
+                          <span className="text-[11px] font-black uppercase tracking-wider">{cfg.label}</span>
+                        </div>
+                        <span className={`text-[9px] line-clamp-1 ${isSelected ? 'text-gray-200' : 'text-gray-400'}`}>
+                          {cfg.desc}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* Sélecteur de ton (Amélioration auxiliaire) */}
+                <div className="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-gray-200">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Ton :</span>
+                  <div className="flex gap-1 flex-wrap">
+                    {TONS_CONFIG.map((t) => {
+                      const TonIcon = t.icon
+                      const isSelected = selectedTon === t.id
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => setSelectedTon(t.id)}
+                          className={`flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition-all ${
+                            isSelected
+                              ? 'bg-gray-900 text-white border border-gray-900'
+                              : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          <TonIcon size={11} className={isSelected ? 'text-[#F3B229]' : 'text-gray-500'} />
+                          <span>{t.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Bouton de génération principal */}
+                <button
+                  onClick={() => handleGenerate()}
+                  disabled={loading}
+                  className="btn-primary-sweep flex items-center justify-center gap-2 w-full py-3 text-white font-black text-xs uppercase tracking-widest disabled:opacity-70 transition-all"
+                >
+                  {loading ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white animate-spin" />
+                      Génération IA ({CANAUX_CONFIG.find(c => c.id === selectedCanal)?.label})…
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={14} className="text-[#F3B229]" />
+                      {result ? 'Régénérer avec ce canal' : `Générer la relance (${CANAUX_CONFIG.find(c => c.id === selectedCanal)?.label})`}
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* ── ZONE DE RÉSULTAT GÉNÉRÉ ── */}
