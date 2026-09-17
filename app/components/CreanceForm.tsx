@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { creerCreance } from '@/app/actions/creances'
-import { UserPlus, Users, AlertCircle, CheckCircle2, Sparkles } from 'lucide-react'
+import { UserPlus, Users, AlertCircle, CheckCircle2, Zap, ChevronDown } from 'lucide-react'
 import { Client } from '@/types'
 
 export default function CreanceForm({ clientsExistants }: { clientsExistants: Client[] }) {
-  const [isNewClient, setIsNewClient] = useState(false)
+  const [isNewClient, setIsNewClient]   = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -23,8 +24,7 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
       const res = await creerCreance(formData)
 
       if (!res.success) {
-        const errText = typeof res.error === 'string' ? res.error : "Une erreur est survenue lors de l'enregistrement."
-        setErrorMessage(errText)
+        setErrorMessage(typeof res.error === 'string' ? res.error : "Une erreur est survenue.")
       } else {
         setSuccessMessage("Créance enregistrée avec succès !")
         formElement.reset()
@@ -32,237 +32,213 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
         setTimeout(() => setSuccessMessage(null), 4000)
       }
     } catch (err: unknown) {
-      console.error("Erreur côté client :", err)
-      const errText = err instanceof Error ? err.message : "Erreur de communication avec le serveur."
-      setErrorMessage(errText)
+      setErrorMessage(err instanceof Error ? err.message : "Erreur de communication.")
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  const inputClass = "input-anim w-full px-4 py-3 text-sm font-medium text-gray-900"
+  const selectClass = "input-anim w-full px-4 py-3 text-sm font-semibold text-gray-900 appearance-none"
+  const labelClass = "block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5"
+
   return (
-    <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 w-full max-w-xl mx-auto transition-all">
-      <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+    <div className="bg-white border border-gray-200 w-full relative overflow-hidden">
+      {/* Accent top bar */}
+      <div className="h-0.5 w-full bg-gradient-to-r from-[#1E4D2B] via-[#F3B229] to-[#1E4D2B]" />
+
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-            Nouvelle Créance
-          </h2>
-          <p className="text-xs text-gray-500 mt-0.5">Saisie rapide d'un impayé client</p>
+          <h2 className="text-base font-black text-gray-900 uppercase tracking-wide">Nouvelle Créance</h2>
+          <p className="text-[10px] text-gray-400 font-mono uppercase tracking-widest mt-0.5">Saisie manuelle · V1</p>
         </div>
-        <span className="text-xs bg-[#F3B229]/15 text-[#8A6000] font-semibold px-3 py-1 rounded-full border border-[#F3B229]/30 flex items-center gap-1.5">
-          <Sparkles size={13} className="text-[#F3B229]" /> V1 Manuel
-        </span>
+        <div className="flex items-center gap-1.5 text-[10px] text-[#F3B229] font-black uppercase tracking-widest border border-[#F3B229]/40 bg-[#F3B229]/8 px-2.5 py-1">
+          <Zap size={11} className="animate-pulse" /> IA Prête
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        {/* Messages d'alerte */}
-        {errorMessage && (
-          <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-medium animate-in fade-in">
-            <AlertCircle size={16} className="shrink-0 text-red-600 mt-0.5" />
-            <div className="flex-1">{errorMessage}</div>
-          </div>
-        )}
+      <form onSubmit={handleSubmit} className="px-6 py-5 flex flex-col gap-5">
+        {/* Alertes */}
+        <AnimatePresence>
+          {errorMessage && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="flex items-start gap-3 p-4 bg-red-50 border-l-4 border-red-500 text-red-800 text-xs font-semibold"
+            >
+              <AlertCircle size={15} className="shrink-0 mt-0.5" />
+              {errorMessage}
+            </motion.div>
+          )}
+          {successMessage && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="flex items-center gap-3 p-4 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-800 text-xs font-bold"
+            >
+              <CheckCircle2 size={15} className="shrink-0 text-emerald-600" />
+              {successMessage}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {successMessage && (
-          <div className="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold animate-in fade-in">
-            <CheckCircle2 size={16} className="shrink-0 text-emerald-600" />
-            <span>{successMessage}</span>
-          </div>
-        )}
-        
-        {/* Toggle Client Existant / Nouveau */}
-        <div className="flex bg-gray-100 p-1 rounded-xl">
-          <button 
-            type="button" 
-            onClick={() => {
-              setIsNewClient(false)
-              setErrorMessage(null)
-            }} 
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-              !isNewClient 
-                ? 'bg-white shadow-sm text-[#1E4D2B]' 
-                : 'text-gray-500 hover:text-gray-800'
+        {/* Toggle client existant / nouveau */}
+        <div className="flex border border-gray-200 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => { setIsNewClient(false); setErrorMessage(null) }}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-black uppercase tracking-wider transition-all ${
+              !isNewClient ? 'bg-[#1E4D2B] text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
             }`}
           >
-            <Users size={16} /> Client existant
+            <Users size={13} /> Client existant
           </button>
-          <button 
-            type="button" 
-            onClick={() => {
-              setIsNewClient(true)
-              setErrorMessage(null)
-            }} 
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-              isNewClient 
-                ? 'bg-white shadow-sm text-[#1E4D2B]' 
-                : 'text-gray-500 hover:text-gray-800'
+          <button
+            type="button"
+            onClick={() => { setIsNewClient(true); setErrorMessage(null) }}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-black uppercase tracking-wider transition-all ${
+              isNewClient ? 'bg-[#1E4D2B] text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
             }`}
           >
-            <UserPlus size={16} /> Nouveau client
+            <UserPlus size={13} /> Nouveau client
           </button>
         </div>
 
-        <input type="hidden" name="isNewClient" value={isNewClient.toString()} />
+        {/* Champ input caché pour isNewClient */}
+        <input type="hidden" name="isNewClient" value={String(isNewClient)} />
 
-        {isNewClient ? (
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
-            <div>
-              <label className="text-xs font-semibold text-gray-700 block mb-1.5">
-                Nom du client / Entreprise <span className="text-[#1E4D2B]">*</span>
-              </label>
-              <input 
-                required 
-                name="nom_client" 
-                placeholder="Ex: Kofi Agence, Cabinet Sika..." 
-                className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-[#1E4D2B] focus:border-transparent focus:bg-white outline-none transition-all" 
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-semibold text-gray-700 block mb-1.5">Numéro WhatsApp</label>
-                <input 
-                  name="whatsapp" 
-                  placeholder="Ex: +22890000000" 
-                  className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-[#1E4D2B] focus:border-transparent focus:bg-white outline-none transition-all" 
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-gray-700 block mb-1.5">Adresse Email</label>
-                <input 
-                  name="email" 
-                  type="email" 
-                  placeholder="client@domaine.com" 
-                  className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-[#1E4D2B] focus:border-transparent focus:bg-white outline-none transition-all" 
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-semibold text-gray-700 block mb-1.5">
-                  Profil du client <span className="text-[#1E4D2B]">*</span>
-                </label>
-                <select 
-                  name="profil" 
-                  className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-[#1E4D2B] focus:border-transparent focus:bg-white outline-none transition-all"
-                >
-                  <option value="professionnel">Professionnel (PME / Commerçant)</option>
-                  <option value="corporate">Corporate / Institutionnel</option>
-                  <option value="particulier informel">Particulier / Informel</option>
+        {/* Client existant — sélection */}
+        <AnimatePresence mode="wait">
+          {!isNewClient ? (
+            <motion.div
+              key="select"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+            >
+              <label className={labelClass}>Client</label>
+              <div className="relative">
+                <select name="client_id" required className={selectClass}>
+                  <option value="">— Sélectionner un client —</option>
+                  {clientsExistants.map(c => (
+                    <option key={c.id} value={c.id}>{c.nom}</option>
+                  ))}
                 </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
-              <div>
-                <label className="text-xs font-semibold text-gray-700 block mb-1.5">Secteur d'activité</label>
-                <select 
-                  name="secteur" 
-                  className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-[#1E4D2B] focus:border-transparent focus:bg-white outline-none transition-all"
-                >
-                  <option value="Services">Services & Consulting</option>
-                  <option value="Commerce">Commerce & Distribution</option>
-                  <option value="BTP">BTP & Construction</option>
-                  <option value="Informel">Secteur Informel</option>
-                  <option value="Autre">Autre</option>
-                </select>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="newclient"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-4"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>Nom du client *</label>
+                  <input name="nom_client" type="text" required placeholder="ex: Kofi Mensah" className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>WhatsApp / Téléphone</label>
+                  <input name="whatsapp" type="tel" placeholder="+228 9X XX XX XX" className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Email</label>
+                  <input name="email" type="email" placeholder="client@exemple.com" className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Profil client</label>
+                  <div className="relative">
+                    <select name="profil" defaultValue="professionnel" className={selectClass}>
+                      <option value="particulier informel">Particulier informel</option>
+                      <option value="professionnel">Professionnel</option>
+                      <option value="corporate">Corporate</option>
+                    </select>
+                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+                <div>
+                  <label className={labelClass}>Secteur d'activité</label>
+                  <div className="relative">
+                    <select name="secteur" defaultValue="Services" className={selectClass}>
+                      {['Services','Commerce','BTP','Agriculture','Santé','Éducation','Transport','Autre'].map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+                <div>
+                  <label className={labelClass}>Retards précédents</label>
+                  <input name="retards_precedents" type="number" min="0" defaultValue="0" className={inputClass} />
+                </div>
               </div>
-            </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
+        {/* Informations créance */}
+        <div className="pt-2 border-t border-gray-100">
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Informations de la créance</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-semibold text-gray-700 block mb-1.5">
-                Retards de paiement antérieurs (nombre)
-              </label>
-              <input 
-                name="retards_precedents" 
-                type="number" 
-                min="0" 
-                defaultValue="0" 
-                placeholder="0" 
-                className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-[#1E4D2B] focus:border-transparent focus:bg-white outline-none transition-all"
-              />
+              <label className={labelClass}>Montant (FCFA) *</label>
+              <input name="montant_fcfa" type="number" min="1" required placeholder="ex: 150000" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Date du service *</label>
+              <input name="date_service" type="date" required className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Type de relation</label>
+              <div className="relative">
+                <select name="type_relation" defaultValue="regulier" className={selectClass}>
+                  <option value="regulier">Client régulier</option>
+                  <option value="nouveau">Nouveau client</option>
+                  <option value="difficile">Client difficile</option>
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+            <div>
+              <label className={labelClass}>Canal de relance</label>
+              <div className="relative">
+                <select name="canal_contact" defaultValue="whatsapp" className={selectClass}>
+                  <option value="whatsapp">WhatsApp</option>
+                  <option value="email">Email</option>
+                  <option value="sms">SMS</option>
+                  <option value="tel">Appel téléphonique</option>
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
             </div>
           </div>
-        ) : (
-          <div>
-            <label className="text-xs font-semibold text-gray-700 block mb-1.5">
-              Sélectionner le client <span className="text-[#1E4D2B]">*</span>
-            </label>
-            <select 
-              name="client_id" 
-              required 
-              className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 focus:ring-2 focus:ring-[#1E4D2B] focus:border-transparent focus:bg-white outline-none transition-all"
-            >
-              <option value="">-- Choisir parmi les clients enregistrés --</option>
-              {clientsExistants?.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.nom} ({c.profil} — {c.retards_precedents || 0} retard(s))
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        <div className="h-px bg-gray-100 my-1"></div>
-
-        <div>
-          <label className="text-xs font-semibold text-gray-700 block mb-1.5">
-            Montant dû (FCFA) <span className="text-[#1E4D2B]">*</span>
-          </label>
-          <input 
-            required 
-            name="montant_fcfa" 
-            type="number" 
-            min="100" 
-            placeholder="Ex: 45000" 
-            className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-lg font-bold text-gray-900 focus:ring-2 focus:ring-[#1E4D2B] focus:border-transparent focus:bg-white outline-none transition-all" 
-          />
-        </div>
-        
-        <div>
-          <label className="text-xs font-semibold text-gray-700 block mb-1.5">
-            Date du service rendu <span className="text-[#1E4D2B]">*</span> 
-            <span className="text-[11px] text-gray-400 font-normal ml-1">(Échéance calculée à J+30)</span>
-          </label>
-          <input 
-            required 
-            name="date_service" 
-            type="date" 
-            defaultValue={new Date().toISOString().split('T')[0]} 
-            className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-[#1E4D2B] focus:border-transparent focus:bg-white outline-none transition-all" 
-          />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs font-semibold text-gray-700 block mb-1.5">Relation client</label>
-            <select 
-              name="type_relation" 
-              className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-[#1E4D2B] focus:border-transparent focus:bg-white outline-none transition-all"
-            >
-              <option value="regulier">Client régulier</option>
-              <option value="nouveau">Nouveau client</option>
-              <option value="difficile">Client difficile</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-gray-700 block mb-1.5">Canal de relance</label>
-            <select 
-              name="canal_contact" 
-              className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-[#1E4D2B] focus:border-transparent focus:bg-white outline-none transition-all"
-            >
-              <option value="whatsapp">WhatsApp</option>
-              <option value="email">Email</option>
-              <option value="sms">SMS</option>
-              <option value="tel">Appel téléphonique</option>
-            </select>
-          </div>
-        </div>
-
-        <button 
-          type="submit" 
+        {/* Bouton submit */}
+        <button
+          type="submit"
           disabled={isSubmitting}
-          className="mt-2 w-full bg-[#1E4D2B] hover:bg-[#15381f] text-white font-semibold py-4 rounded-xl active:scale-[0.99] transition-all disabled:opacity-60 shadow-md shadow-[#1E4D2B]/20 text-sm flex items-center justify-center gap-2 cursor-pointer"
+          className="btn-primary-sweep w-full py-4 text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-60 transition-all"
         >
-          {isSubmitting ? 'Enregistrement en cours...' : 'Enregistrer la créance'}
+          {isSubmitting ? (
+            <>
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white animate-spin" />
+              Enregistrement…
+            </>
+          ) : (
+            <>
+              <Zap size={15} className="text-[#F3B229]" />
+              Enregistrer la créance
+            </>
+          )}
         </button>
       </form>
     </div>

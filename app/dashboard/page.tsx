@@ -1,17 +1,17 @@
 import { createClient } from '@/utils/supabase/server'
 import DashboardClient from '@/app/components/DashboardClient'
-import { AlertTriangle, Clock, Wallet, Bell, LogIn, ShieldAlert } from 'lucide-react'
+import AnimatedSection from '@/app/components/AnimatedSection'
+import { signOut } from '@/app/actions/auth'
+import { AlertTriangle, Clock, Wallet, Bell, LogIn, ShieldAlert, LogOut, Zap } from 'lucide-react'
 import { Client, Facture, Relance, Paiement } from '@/types'
 import Link from 'next/link'
 
 export default async function Dashboard() {
   const supabase = await createClient()
-  
-  // 1. Contrôle de session
+
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   const isAuthenticated = !!user && !authError
 
-  // 2. Récupération des données Supabase avec valeurs par défaut
   let clients: Client[] = []
   let factures: Facture[] = []
   let relances: Relance[] = []
@@ -25,130 +25,204 @@ export default async function Dashboard() {
         supabase.from('relances').select('*, factures(*, clients(*))').order('created_at', { ascending: false }),
         supabase.from('paiements').select('*, factures(*, clients(*))').order('created_at', { ascending: false })
       ])
-
       clients = clientsRes.data || []
       factures = facturesRes.data || []
       relances = relancesRes.data || []
       paiements = paiementsRes.data || []
-    } catch (dbErr) {
-      console.error("Erreur lors du chargement des données Supabase :", dbErr)
-      clients = []
-      factures = []
-      relances = []
-      paiements = []
+    } catch {
+      clients = []; factures = []; relances = []; paiements = []
     }
   }
 
-  // Factures actives (en attente de règlement)
-  const facturesActives = (factures || []).filter(f => f?.statut === 'en_attente')
-
-  // Calculs KPIs robustes
+  const facturesActives = factures.filter(f => f?.statut === 'en_attente')
   const totalDu = facturesActives.reduce((acc, curr) => acc + (Number(curr?.montant_fcfa) || 0), 0)
-  
   const maintenant = new Date()
-  const enRetardNb = facturesActives.filter(f => {
-    if (!f?.date_echeance) return false
-    return new Date(f.date_echeance).getTime() < maintenant.getTime()
-  }).length
+  const enRetardNb = facturesActives.filter(f => f?.date_echeance && new Date(f.date_echeance) < maintenant).length
+  const aRelancerAujourdhui = facturesActives.filter(f =>
+    (Number(f?.score_risque) || 0) >= 34 || (f?.date_echeance && new Date(f.date_echeance) < maintenant)
+  ).length
 
-  const aRelancerAujourdhui = facturesActives.filter(f => {
-    if (!f) return false
-    const estEnRetard = f.date_echeance ? new Date(f.date_echeance).getTime() < maintenant.getTime() : false
-    return (Number(f.score_risque) || 0) >= 34 || estEnRetard
-  }).length
+  const kpis = [
+    {
+      icon: <Wallet size={20} />,
+      label: 'Montant total dû',
+      value: totalDu.toLocaleString('fr-FR'),
+      unit: 'FCFA',
+      color: '#F3B229',
+      delay: '0ms',
+    },
+    {
+      icon: <AlertTriangle size={20} />,
+      label: 'Créances actives',
+      value: String(facturesActives.length),
+      unit: 'dossiers',
+      color: '#6ee7b7',
+      delay: '80ms',
+    },
+    {
+      icon: <Clock size={20} />,
+      label: 'En retard',
+      value: String(enRetardNb),
+      unit: 'factures',
+      color: '#F3B229',
+      delay: '160ms',
+    },
+    {
+      icon: <Bell size={20} />,
+      label: 'À relancer',
+      value: String(aRelancerAujourdhui),
+      unit: "aujourd\u2019hui",
+      color: '#fca5a5',
+      delay: '240ms',
+    },
+  ]
+
+  const tickerText = 'NOW SYSTEM ACTIF — RELANCE IA — SUPABASE RLS — SCORING ALGORITHMIQUE — MULTICANAL — WHATSAPP · EMAIL · SMS · TEL — '
 
   return (
-    <main className="min-h-screen bg-gray-50 pb-20 text-gray-900 font-sans">
-      {/* Header Premium Vert Forêt & Accent Or */}
-      <header className="bg-gradient-to-br from-[#14361e] via-[#1E4D2B] to-[#184223] text-white p-6 md:p-8 rounded-b-2xl md:rounded-b-3xl shadow-md border-b border-[#1E4D2B]/50">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <div className="flex justify-between items-center">
+    <main className="min-h-screen pb-28" style={{ background: 'var(--bg)' }}>
+
+      {/* ════════════════════════════════════
+          HEADER — animé + décoration + déconnexion
+          ════════════════════════════════════ */}
+      <header className="animated-gradient scan-line text-white relative overflow-hidden">
+
+        {/* Coin accent lines */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute top-0 left-0 w-32 h-px bg-gradient-to-r from-[#F3B229]/80 to-transparent" />
+          <div className="absolute top-0 left-0 w-px h-32 bg-gradient-to-b from-[#F3B229]/80 to-transparent" />
+          <div className="absolute bottom-12 right-0 w-32 h-px bg-gradient-to-l from-[#F3B229]/60 to-transparent" />
+          <div className="absolute bottom-12 right-0 w-px h-32 bg-gradient-to-t from-[#F3B229]/60 to-transparent" />
+
+          {/* Floating geometric shapes (infinite) */}
+          <div className="float-y absolute top-8 right-[8%] w-14 h-14 border border-[#F3B229]/25"
+               style={{ animationDelay: '0s', animationDuration: '6s' }} />
+          <div className="float-y absolute top-20 right-[22%] w-5 h-5 bg-[#F3B229]/15"
+               style={{ animationDelay: '1.5s', animationDuration: '4s' }} />
+          <div className="float-y absolute bottom-16 left-[12%] w-20 h-20 border border-white/8"
+               style={{ animationDelay: '0.7s', animationDuration: '7s' }} />
+          <div className="float-y absolute top-1/3 left-[5%] w-3 h-3 bg-white/10"
+               style={{ animationDelay: '2.2s', animationDuration: '5s' }} />
+          <div className="float-y absolute bottom-16 right-[38%] w-6 h-6 border border-[#F3B229]/20"
+               style={{ animationDelay: '1.2s', animationDuration: '8s' }} />
+          <div className="float-y absolute top-6 left-[40%] w-2 h-8 bg-[#F3B229]/10"
+               style={{ animationDelay: '3s', animationDuration: '5s' }} />
+        </div>
+
+        {/* Main header content */}
+        <div className="relative z-10 max-w-4xl mx-auto px-5 pt-7 pb-6 md:px-8 md:pt-9 md:pb-7 space-y-6">
+
+          {/* Logo + bouton déconnexion */}
+          <div className="flex justify-between items-start gap-4">
             <div>
-              <h1 className="text-3xl md:text-4xl font-black tracking-tight flex items-center">
-                Now<span className="text-[#F3B229]">.</span>
+              <h1 className="text-3xl md:text-5xl font-black tracking-tighter leading-none">
+                Now<span className="shimmer-text">.</span>
               </h1>
-              <p className="text-gray-200 text-xs md:text-sm font-medium mt-0.5">
-                Relancez juste. Récupérez vite.
+              <p className="text-gray-400 text-xs md:text-sm font-mono mt-1.5 tracking-wider uppercase">
+                Relancez juste · Récupérez vite
               </p>
             </div>
-            
-            <div className="flex items-center gap-2">
+
+            <div className="flex items-center gap-2 pt-1 shrink-0">
               {isAuthenticated ? (
-                <span className="text-xs bg-[#F3B229]/20 border border-[#F3B229]/40 text-[#F3B229] px-3.5 py-1.5 rounded-full font-bold flex items-center gap-2 shadow-xs">
-                  <span className="w-2 h-2 rounded-full bg-[#F3B229] animate-pulse"></span>
-                  Connecté
-                </span>
+                <>
+                  {/* Indicateur connecté avec ring animé */}
+                  <div className="relative flex items-center gap-2 text-xs text-[#F3B229] border border-[#F3B229]/40 px-3 py-1.5 font-bold">
+                    <span className="relative flex h-2 w-2">
+                      <span className="pulse-glow animate-ping absolute inline-flex h-full w-full bg-[#F3B229] opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 bg-[#F3B229]" />
+                    </span>
+                    Connecté
+                  </div>
+
+                  {/* Bouton déconnexion */}
+                  <form action={signOut}>
+                    <button
+                      type="submit"
+                      className="btn-sweep flex items-center gap-1.5 text-xs border border-white/25 text-white/80 px-3 py-1.5 font-semibold hover:text-black transition-all"
+                    >
+                      <LogOut size={13} />
+                      <span className="hidden sm:inline">Déconnexion</span>
+                    </button>
+                  </form>
+                </>
               ) : (
-                <Link 
-                  href="/login" 
-                  className="text-xs bg-white/10 hover:bg-white/20 border border-white/20 text-white px-4 py-2 rounded-full font-semibold flex items-center gap-1.5 transition-all shadow-xs"
+                <Link
+                  href="/login"
+                  className="btn-sweep flex items-center gap-1.5 text-xs border border-white/25 text-white px-4 py-2 font-semibold"
                 >
-                  <LogIn size={14} /> Se connecter
+                  <LogIn size={13} /> Se connecter
                 </Link>
               )}
             </div>
           </div>
-          
-          {/* 4 KPIs V1 Conformes */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 pt-1">
-            <div className="bg-white/10 p-4 md:p-5 rounded-xl backdrop-blur-md border border-white/15 shadow-sm">
-              <Wallet className="text-[#F3B229] mb-2" size={22} />
-              <p className="text-[11px] text-gray-200 font-medium uppercase tracking-wider">Montant total dû</p>
-              <p className="text-lg md:text-xl font-extrabold mt-0.5 text-white">
-                {totalDu.toLocaleString('fr-FR')} <span className="text-xs font-semibold text-[#F3B229]">FCFA</span>
-              </p>
-            </div>
 
-            <div className="bg-white/10 p-4 md:p-5 rounded-xl backdrop-blur-md border border-white/15 shadow-sm">
-              <AlertTriangle className="text-emerald-300 mb-2" size={22} />
-              <p className="text-[11px] text-gray-200 font-medium uppercase tracking-wider">Créances actives</p>
-              <p className="text-lg md:text-xl font-extrabold mt-0.5 text-white">{facturesActives.length}</p>
-            </div>
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {kpis.map(({ icon, label, value, unit, color, delay }) => (
+              <div
+                key={label}
+                className="kpi-card p-4 md:p-5"
+                style={{ animationDelay: delay }}
+              >
+                <div className="mb-2" style={{ color }}>{icon}</div>
+                <p className="text-[10px] text-gray-400 font-mono uppercase tracking-widest leading-tight">{label}</p>
+                <p className="text-xl md:text-2xl font-black mt-1 count-in" style={{ color }}>
+                  {value}
+                </p>
+                <p className="text-[10px] text-gray-500 font-medium mt-0.5">{unit}</p>
+              </div>
+            ))}
+          </div>
+        </div>
 
-            <div className="bg-white/10 p-4 md:p-5 rounded-xl backdrop-blur-md border border-white/15 shadow-sm">
-              <Clock className="text-[#F3B229] mb-2" size={22} />
-              <p className="text-[11px] text-gray-200 font-medium uppercase tracking-wider">En retard (nb)</p>
-              <p className="text-lg md:text-xl font-extrabold mt-0.5 text-[#F3B229]">{enRetardNb}</p>
-            </div>
-
-            <div className="bg-white/10 p-4 md:p-5 rounded-xl backdrop-blur-md border border-white/15 shadow-sm">
-              <Bell className="text-amber-200 mb-2" size={22} />
-              <p className="text-[11px] text-gray-200 font-medium uppercase tracking-wider">À relancer</p>
-              <p className="text-lg md:text-xl font-extrabold mt-0.5 text-amber-200">{aRelancerAujourdhui}</p>
-            </div>
+        {/* Ticker bar */}
+        <div className="relative z-10 border-t border-white/10 bg-black/20 overflow-hidden h-7 flex items-center">
+          <div
+            className="flex whitespace-nowrap text-[10px] font-mono text-[#F3B229]/50 tracking-widest gap-0"
+            style={{ animation: 'marquee 24s linear infinite' }}
+          >
+            {/* Doubled for seamless loop */}
+            <span className="pr-16">{tickerText}</span>
+            <span className="pr-16">{tickerText}</span>
           </div>
         </div>
       </header>
 
-      {/* Conteneur principal */}
-      <div className="max-w-4xl mx-auto p-4 md:p-6 mt-4 space-y-6">
-        {/* Alerte si utilisateur non connecté */}
+      {/* ════════════════════════════════════
+          CONTENU PRINCIPAL
+          ════════════════════════════════════ */}
+      <div className="max-w-4xl mx-auto px-4 md:px-6 pt-6 space-y-6">
+
+        {/* Alerte non connecté */}
         {!isAuthenticated && (
-          <div className="bg-[#F3B229]/10 border border-[#F3B229]/30 rounded-xl md:rounded-2xl p-4 md:p-5 flex items-start gap-4 shadow-sm">
-            <ShieldAlert className="text-[#B27F15] shrink-0 mt-0.5" size={22} />
-            <div className="flex-1 text-xs md:text-sm text-gray-800">
-              <p className="font-bold text-[#8A6000]">Mode non connecté (Politiques Supabase RLS actives)</p>
-              <p className="mt-1 text-gray-600 leading-relaxed">
-                Connectez-vous pour enregistrer vos créances et synchroniser vos relances avec les règles de sécurité mono-tenant de votre entreprise.
-              </p>
-              <div className="mt-3">
-                <Link 
-                  href="/login" 
-                  className="inline-flex items-center gap-1.5 bg-[#1E4D2B] hover:bg-[#15381f] text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all shadow-sm"
+          <AnimatedSection>
+            <div className="border-l-4 border-[#F3B229] bg-white p-5 flex items-start gap-4 shadow-sm">
+              <ShieldAlert className="text-[#F3B229] shrink-0 mt-0.5" size={22} />
+              <div className="flex-1 text-sm text-gray-700">
+                <p className="font-bold text-gray-900 mb-1">Mode non connecté — RLS Supabase actif</p>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Connectez-vous pour accéder à vos créances et synchroniser vos données de manière sécurisée.
+                </p>
+                <Link
+                  href="/login"
+                  className="btn-primary-sweep mt-3 inline-flex items-center gap-1.5 bg-[#1E4D2B] text-white font-semibold text-xs px-4 py-2"
                 >
-                  <LogIn size={14} /> Accéder à la connexion
+                  <LogIn size={13} /> Se connecter
                 </Link>
               </div>
             </div>
-          </div>
+          </AnimatedSection>
         )}
 
-        <DashboardClient
-          initialClients={clients}
-          initialFactures={factures}
-          initialRelances={relances}
-          initialPaiements={paiements}
-        />
+        <AnimatedSection>
+          <DashboardClient
+            initialClients={clients}
+            initialFactures={factures}
+            initialRelances={relances}
+            initialPaiements={paiements}
+          />
+        </AnimatedSection>
       </div>
     </main>
   )
