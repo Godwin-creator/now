@@ -144,7 +144,7 @@ export default function LoginPage() {
       <div
         className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-300"
         style={{
-          background: `radial-gradient(650px circle at ${mousePos.x}px ${mousePos.y}px, rgba(243, 178, 41, 0.14), rgba(30, 77, 43, 0.12) 40%, transparent 75%)`,
+          background: `radial-gradient(150px circle at ${mousePos.x}px ${mousePos.y}px, rgba(243, 178, 41, 0.14), rgba(30, 77, 43, 0.12) 40%, transparent 95%)`,
         }}
       />
 
