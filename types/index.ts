@@ -1,6 +1,6 @@
 export type ProfilClient = 'particulier informel' | 'professionnel' | 'corporate';
 export type TypeRelation = 'regulier' | 'nouveau' | 'difficile';
-export type CanalContact = 'whatsapp' | 'email' | 'sms' | 'tel';
+export type CanalContact = 'whatsapp' | 'email' | 'sms' | 'tel' | 'tous';
 export type NiveauRisque = 'Faible' | 'Moyen' | 'Élevé' | 'Critique';
 export type StatutFacture = 'en_attente' | 'payee' | 'annulee';
 

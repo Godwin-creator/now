@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS public.factures (
   date_echeance TIMESTAMPTZ NOT NULL,
   statut TEXT NOT NULL DEFAULT 'en_attente' CHECK (statut IN ('en_attente', 'payee', 'annulee')),
   type_relation TEXT NOT NULL CHECK (type_relation IN ('regulier', 'nouveau', 'difficile')),
-  canal_contact TEXT NOT NULL CHECK (canal_contact IN ('whatsapp', 'email', 'sms', 'tel')),
+  canal_contact TEXT NOT NULL CHECK (canal_contact IN ('whatsapp', 'email', 'sms', 'tel', 'tous')),
   score_risque INT NOT NULL CHECK (score_risque BETWEEN 0 AND 100),
   niveau_risque TEXT NOT NULL CHECK (niveau_risque IN ('Faible', 'Moyen', 'Élevé', 'Critique')),
   created_at TIMESTAMPTZ DEFAULT NOW()

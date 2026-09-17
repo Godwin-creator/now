@@ -17,6 +17,10 @@ import {
   Check,
   TrendingUp,
   ArrowRight,
+  Globe,
+  Mail,
+  MessageCircle,
+  PhoneCall,
 } from 'lucide-react'
 import { Client, Facture, Relance, Paiement } from '@/types'
 
@@ -214,13 +218,13 @@ export default function DashboardClient({
                     ['en_attente','En attente'],['Tous','Tous statuts'],['payee','Réglées'],['annulee','Annulées'],
                   ]},
                   { label: 'Risque', value: filterRisque, set: setFilterRisque, options: [
-                    ['Tous','Tous'],['Faible','🟢 Faible'],['Moyen','🟡 Moyen'],['Élevé','🟠 Élevé'],['Critique','🔴 Critique'],
+                    ['Tous','Tous les risques'],['Faible','Faible'],['Moyen','Moyen'],['Élevé','Élevé'],['Critique','Critique'],
                   ]},
                   { label: 'Retard', value: filterRetard, set: setFilterRetard, options: [
                     ['Tous','Toutes durées'],['1-15','1–15 j'],['16-30','16–30 j'],['31-45','31–45 j'],['gt45','> 45 j'],
                   ]},
                   { label: 'Canal', value: filterCanal, set: setFilterCanal, options: [
-                    ['Tous','Tous'],['whatsapp','WhatsApp'],['email','Email'],['sms','SMS'],['tel','Tél'],
+                    ['Tous','Tous les canaux'],['tous','Multi-canal (Tous)'],['whatsapp','WhatsApp'],['email','Email'],['sms','SMS'],['tel','Téléphone'],
                   ]},
                 ].map(({ label, value, set, options }) => (
                   <div key={label}>
@@ -267,8 +271,8 @@ export default function DashboardClient({
                             </span>
                           )}
                           {estPayee && (
-                            <span className="text-[10px] font-black bg-emerald-600 text-white px-2 py-0.5 uppercase tracking-wider">
-                              Soldée
+                            <span className="text-[10px] font-black bg-emerald-600 text-white px-2 py-0.5 uppercase tracking-wider flex items-center gap-1">
+                              <Check size={11} /> Soldée
                             </span>
                           )}
                         </div>
@@ -280,8 +284,18 @@ export default function DashboardClient({
 
                       {/* Badge risque */}
                       <div className="flex flex-col items-end gap-1 shrink-0">
-                        <span className={`text-[10px] font-black px-2.5 py-1 uppercase tracking-wider ${riskStyle(estPayee ? '' : facture.niveau_risque)}`}>
-                          {estPayee ? '✓ Réglée' : `${facture.niveau_risque}`}
+                        <span className={`text-[10px] font-black px-2.5 py-1 uppercase tracking-wider flex items-center gap-1 ${riskStyle(estPayee ? '' : facture.niveau_risque)}`}>
+                          {estPayee ? (
+                            <>
+                              <Check size={11} /> Réglée
+                            </>
+                          ) : (
+                            <>
+                              {facture.niveau_risque === 'Critique' && <AlertCircle size={11} />}
+                              {facture.niveau_risque === 'Élevé' && <TrendingUp size={11} />}
+                              {facture.niveau_risque}
+                            </>
+                          )}
                         </span>
                         {!estPayee && (
                           <div className="flex items-center gap-1 text-[10px] text-gray-400 font-mono">
@@ -294,8 +308,17 @@ export default function DashboardClient({
 
                     {/* Métadonnées */}
                     <div className="flex flex-wrap gap-2 text-[11px]">
-                      <span className="bg-gray-100 text-gray-700 px-2.5 py-1 font-semibold uppercase tracking-wide">
-                        {facture.canal_contact}
+                      <span className={`flex items-center gap-1.5 px-2.5 py-1 font-bold uppercase tracking-wide ${
+                        facture.canal_contact === 'tous'
+                          ? 'bg-[#F3B229]/20 text-[#8A6000] border border-[#F3B229]/40'
+                          : 'bg-gray-100 text-gray-700'
+                      }`}>
+                        {facture.canal_contact === 'tous' && <Globe size={12} className="text-[#8A6000]" />}
+                        {facture.canal_contact === 'whatsapp' && <MessageCircle size={12} className="text-[#25D366]" />}
+                        {facture.canal_contact === 'email' && <Mail size={12} className="text-[#1E4D2B]" />}
+                        {facture.canal_contact === 'sms' && <MessageSquare size={12} className="text-gray-900" />}
+                        {facture.canal_contact === 'tel' && <PhoneCall size={12} className="text-[#8A6000]" />}
+                        <span>{facture.canal_contact === 'tous' ? 'Tous les canaux' : facture.canal_contact}</span>
                       </span>
                       <span className="bg-gray-100 text-gray-700 px-2.5 py-1 font-semibold">
                         Échéance: {new Date(facture.date_echeance).toLocaleDateString('fr-FR')}
@@ -336,6 +359,7 @@ export default function DashboardClient({
                           factureId={facture.id}
                           canal={facture.canal_contact}
                           niveauRisque={facture.niveau_risque}
+                          client={facture.clients}
                         />
                       </div>
                     )}

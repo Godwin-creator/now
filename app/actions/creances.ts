@@ -138,7 +138,7 @@ export async function creerCreance(formData: FormData): Promise<ActionResponse> 
       date_service: dateService.toISOString(),
       date_echeance: dateEcheance.toISOString(),
       type_relation: String(formData.get('type_relation') || 'regulier'),
-      canal_contact: String(formData.get('canal_contact') || 'whatsapp'),
+      canal_contact: String(formData.get('canal_contact') || 'tous'),
       score_risque: score,
       niveau_risque: niveau,
       statut: 'en_attente'
@@ -165,11 +165,22 @@ export type RelanceResponse = {
   success: boolean;
   message?: string;
   relanceId?: string;
-  client?: any;
+  canalUtilise?: string;
+  client?: {
+    nom?: string;
+    whatsapp?: string;
+    telephone?: string;
+    email?: string;
+    profil?: string;
+  };
   error?: string;
 }
 
-export async function genererMessageIA(factureId: string): Promise<RelanceResponse> {
+export async function genererMessageIA(
+  factureId: string, 
+  canalChoisi?: string,
+  tonChoisi?: string
+): Promise<RelanceResponse> {
   try {
     const supabase = await createClient()
     
@@ -190,6 +201,9 @@ export async function genererMessageIA(factureId: string): Promise<RelanceRespon
       return { success: false, error: "Facture introuvable." }
     }
 
+    // Déterminer le canal effectif
+    const canalEffectif = canalChoisi || facture.canal_contact || 'whatsapp'
+
     const dateEcheance = new Date(facture.date_echeance)
     const maintenant = new Date()
     const diffMs = maintenant.getTime() - dateEcheance.getTime()
@@ -197,57 +211,105 @@ export async function genererMessageIA(factureId: string): Promise<RelanceRespon
 
     const nomEntreprise = facture.companies?.nom || 'Notre entreprise'
     const nomClient = facture.clients?.nom || 'Cher client'
+    const montantFormate = `${Number(facture.montant_fcfa).toLocaleString('fr-FR')} FCFA`
+    const dateEcheanceStr = dateEcheance.toLocaleDateString('fr-FR')
 
-    // Ton de la relance selon le profil client et la relation
+    // Ton de la relance selon le profil client et la relation ou le choix explicite
     let tonRecommande = 'Direct, courtois et professionnel'
-    if (facture.clients?.profil === 'corporate') {
+    if (tonChoisi === 'courtois') {
+      tonRecommande = 'Très courtois, bienveillant et axé relation de confiance'
+    } else if (tonChoisi === 'factuel') {
+      tonRecommande = 'Direct, factuel et strictement professionnel'
+    } else if (tonChoisi === 'ferme') {
+      tonRecommande = 'Ferme, insistant sur le dépassement d’échéance et l’urgence de régulariser'
+    } else if (tonChoisi === 'urgent') {
+      tonRecommande = 'Dernier avis formel avant transmission au service contentieux ou suspension de service'
+    } else if (facture.clients?.profil === 'corporate') {
       tonRecommande = 'Très formel et institutionnel'
     } else if (facture.clients?.profil === 'particulier informel') {
       tonRecommande = 'Courtois, factuel et chaleureux'
     }
 
-    // Formatting par canal
-    let regleCanal = "Rédige un message intermédiaire avec formule de politesse."
-    if (facture.canal_contact === 'sms') {
-      regleCanal = "Fais un message très court et concis de 160 caractères maximum."
-    } else if (facture.canal_contact === 'email') {
-      regleCanal = "Structure le message avec un Objet clair, un corps poli et une formule de politesse."
-    } else if (facture.canal_contact === 'whatsapp') {
-      regleCanal = "Rédige un message WhatsApp lisible et structuré, direct sans fioritures."
+    // Instructions spécifiques selon le canal
+    let instructionsCanal = ""
+    if (canalEffectif === 'sms') {
+      instructionsCanal = `
+- Canal : SMS (contrainte absolue : moins de 160 caractères).
+- Rédige un message SMS percutant et ultra-concis mentionnant le montant (${montantFormate}) et le nom de l'entreprise.`
+    } else if (canalEffectif === 'email') {
+      instructionsCanal = `
+- Canal : EMAIL.
+- Rédige un email complet et soigné avec :
+  1. Une ligne "Objet : [Objet clair et percutant]"
+  2. Formule de salutation appropriée
+  3. Corps du message rappelant la facture (${montantFormate}), l'échéance (${dateEcheanceStr}) et la date de service
+  4. Proposition de modalités ou invitation à échanger en cas de difficulté
+  5. Formule de politesse professionnelle et signature "${nomEntreprise}".`
+    } else if (canalEffectif === 'whatsapp') {
+      instructionsCanal = `
+- Canal : WHATSAPP.
+- Rédige un message WhatsApp lisible, direct, bien espacé, sans lourdeurs, prêt à l'envoi direct.`
+    } else if (canalEffectif === 'tel') {
+      instructionsCanal = `
+- Canal : SCRIPT D'APPEL TÉLÉPHONIQUE (guide d'entretien pour le chargé de recouvrement).
+- Rédige un script d'appel structuré sous forme de guide conversationnel en 4 étapes :
+  1. [Ouverture] : Salutation et identification professionnelle.
+  2. [Rappel] : Rappel du montant (${montantFormate}) et échéance échue (${dateEcheanceStr}).
+  3. [Écoute / Négociation] : Questions pour identifier la raison du retard et proposer un règlement ou un échéancier.
+  4. [Clôture] : Fixation d'une date d'engagement ferme et remerciement.`
+    } else {
+      // canalEffectif === 'tous'
+      instructionsCanal = `
+- Canal : MULTI-CANAL (PACK DE RELANCE COMPLET).
+- Génère 4 versions adaptées et clairement identifiées par des en-têtes :
+  === [1. WHATSAPP] ===
+  (Message direct et fluide)
+
+  === [2. EMAIL] ===
+  (Objet + corps structuré + formule de politesse)
+
+  === [3. SMS (<160 car.)] ===
+  (Message ultra-court)
+
+  === [4. SCRIPT D'APPEL TÉLÉPHONIQUE] ===
+  (Guide pas-à-pas pour l'appel)`
     }
 
     // Prompt Engineering strict selon les règles du cahier des charges
     const prompt = `
-Tu es l'assistant de relance et de recouvrement amiable de l'entreprise "${nomEntreprise}".
+Tu es l'expert en recouvrement et relance commerciale de l'entreprise "${nomEntreprise}".
 
 Règles strictes de rédaction :
-- Rédige TOUJOURS au nom de l'entreprise en utilisant la première personne du pluriel ("Nous").
+- Rédige au nom de l'entreprise en utilisant la première personne du pluriel ("Nous").
 - N'utilise ABSOLUMENT AUCUN émoji.
-- Ton recommandé : ${tonRecommande}.
-- Canal cible : ${facture.canal_contact.toUpperCase()}. ${regleCanal}
-- Niveau de risque estimé : ${facture.niveau_risque} (Score: ${facture.score_risque}/100).
+- Ton appliqué : ${tonRecommande}.
+- Niveau de risque : ${facture.niveau_risque} (Score de risque : ${facture.score_risque}/100).
+- Retard constaté : ${joursRetard} jour(s).
+
+${instructionsCanal}
 
 Données du dossier :
 - Nom du client : ${nomClient}
-- Montant dû : ${Number(facture.montant_fcfa).toLocaleString('fr-FR')} FCFA
-- Date d'échéance : ${dateEcheance.toLocaleDateString('fr-FR')} (${joursRetard} jour(s) de retard)
+- Montant dû : ${montantFormate}
+- Date d'échéance : ${dateEcheanceStr}
+- Date du service : ${new Date(facture.date_service).toLocaleDateString('fr-FR')}
 - Secteur client : ${facture.clients?.secteur || 'Non renseigné'}
 - Entreprise émettrice : ${nomEntreprise}
 
-Génère UNIQUEMENT le texte du message prêt à être copié et envoyé.
+Génère UNIQUEMENT le texte du message ou du script prêt à l'emploi.
 `
 
     let messageGenere = ""
     try {
       const apiKey = process.env.GEMINI_API_KEY
       if (!apiKey || apiKey.startsWith('AQ.') || apiKey.includes('placeholder')) {
-        // Fallback professionnel si la clé Gemini n'est pas configurée
-        if (facture.canal_contact === 'email') {
-          messageGenere = `Objet : Relance — Règlement de facture d'un montant de ${Number(facture.montant_fcfa).toLocaleString('fr-FR')} FCFA
+        // Fallbacks professionnels adaptés par canal si la clé Gemini n'est pas configurée
+        if (canalEffectif === 'email') {
+          messageGenere = `Objet : Relance — Règlement de facture d'un montant de ${montantFormate}
 
 Madame, Monsieur,
 
-Nous nous permettons de vous adresser ce message concernant notre facture d'un montant de ${Number(facture.montant_fcfa).toLocaleString('fr-FR')} FCFA, dont l'échéance est dépassée depuis le ${dateEcheance.toLocaleDateString('fr-FR')}.
+Nous nous permettons de vous adresser ce message concernant notre facture d'un montant de ${montantFormate}, dont l'échéance était fixée au ${dateEcheanceStr}.
 
 Sauf erreur de notre part, ce règlement n'a pas encore été enregistré dans nos comptes. Nous vous serions reconnaissants de bien vouloir procéder au paiement dans les meilleurs délais, ou de nous contacter si vous souhaitez convenir d'un arrangement.
 
@@ -255,8 +317,40 @@ Nous restons à votre entière disposition pour tout renseignement complémentai
 
 Cordialement,
 ${nomEntreprise}`
+        } else if (canalEffectif === 'sms') {
+          messageGenere = `Rappel ${nomEntreprise}: votre facture de ${montantFormate} echue le ${dateEcheanceStr} est en attente. Merci de proceder au reglement.`
+        } else if (canalEffectif === 'tel') {
+          messageGenere = `[SCRIPT D'APPEL TÉLÉPHONIQUE]
+1. OUVERTURE :
+"Bonjour ${nomClient}, je suis le responsable comptabilité de l'entreprise ${nomEntreprise}. Avez-vous deux minutes à m'accorder ?"
+
+2. RAPPEL DU DOSSIER :
+"Je vous contacte concernant votre facture de ${montantFormate} dont l'échéance était le ${dateEcheanceStr}, soit un retard de ${joursRetard} jours. Avez-vous bien reçu le document ?"
+
+3. ÉCOUTE ET ENGAGEMENT :
+"Y a-t-il eu un contretemps particulier pour le paiement ? Quand pouvons-nous planifier la réception du virement ?"
+
+4. CLÔTURE :
+"Parfait, je note donc votre engagement de règlement pour le [date convenue]. Merci pour votre collaboration et excellente journée."`
+        } else if (canalEffectif === 'tous') {
+          messageGenere = `=== [1. WHATSAPP] ===
+Bonjour ${nomClient}, nous vous contactons concernant votre facture de ${montantFormate} échue le ${dateEcheanceStr}. Merci de bien vouloir nous confirmer la date de votre règlement. Cordialement, ${nomEntreprise}.
+
+=== [2. EMAIL] ===
+Objet : Relance — Règlement facture ${montantFormate}
+
+Madame, Monsieur,
+Nous vous rappelons que la facture de ${montantFormate} échue le ${dateEcheanceStr} reste impayée. Merci de régulariser la situation dans les meilleurs délais.
+Cordialement, ${nomEntreprise}
+
+=== [3. SMS] ===
+Rappel ${nomEntreprise}: facture de ${montantFormate} echue le ${dateEcheanceStr} en attente. Merci de proceder au reglement.
+
+=== [4. SCRIPT D'APPEL] ===
+"Bonjour ${nomClient}, ${nomEntreprise} au téléphone. Je vous appelle au sujet de la facture de ${montantFormate} échue le ${dateEcheanceStr} pour convenir d'une date de règlement."`
         } else {
-          messageGenere = `Bonjour ${nomClient}, nous vous contactons concernant la facture de ${Number(facture.montant_fcfa).toLocaleString('fr-FR')} FCFA échue le ${dateEcheance.toLocaleDateString('fr-FR')}. Sauf erreur de notre part, le règlement n'a pas encore été reçu. Merci de bien vouloir faire le nécessaire dans les plus brefs délais. Cordialement, ${nomEntreprise}.`
+          // WhatsApp par défaut
+          messageGenere = `Bonjour ${nomClient}, nous vous contactons concernant la facture de ${montantFormate} échue le ${dateEcheanceStr}. Sauf erreur de notre part, le règlement n'a pas encore été reçu. Merci de bien vouloir faire le nécessaire dans les plus brefs délais. Cordialement, ${nomEntreprise}.`
         }
       } else {
         const ai = new GoogleGenAI({ apiKey })
@@ -268,7 +362,7 @@ ${nomEntreprise}`
       }
     } catch (error) {
       console.error("Erreur lors de l'appel Gemini API:", error)
-      messageGenere = `Bonjour ${nomClient}, nous vous sollicitons concernant votre facture de ${Number(facture.montant_fcfa).toLocaleString('fr-FR')} FCFA en retard de paiement. Merci de nous recontacter pour finaliser le règlement. Cordialement, ${nomEntreprise}.`
+      messageGenere = `Bonjour ${nomClient}, nous vous sollicitons concernant votre facture de ${montantFormate} en retard de paiement. Merci de nous recontacter pour finaliser le règlement. Cordialement, ${nomEntreprise}.`
     }
 
     // Sauvegarder la relance dans le journal d'historique Supabase
@@ -276,7 +370,7 @@ ${nomEntreprise}`
     try {
       const { data: relance } = await supabase.from('relances').insert({
         facture_id: factureId,
-        canal: facture.canal_contact,
+        canal: canalEffectif,
         message_genere: messageGenere,
         statut_envoi: 'genere'
       }).select().single()
@@ -288,11 +382,14 @@ ${nomEntreprise}`
     return { 
       success: true, 
       message: messageGenere, 
-      relanceId, 
+      relanceId,
+      canalUtilise: canalEffectif,
       client: {
         nom: facture.clients?.nom,
         whatsapp: facture.clients?.whatsapp,
-        email: facture.clients?.email
+        telephone: facture.clients?.telephone,
+        email: facture.clients?.email,
+        profil: facture.clients?.profil
       }
     }
   } catch (err: unknown) {
