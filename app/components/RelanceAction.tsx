@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { genererMessageIA } from '@/app/actions/creances'
-import { Bot, Copy, Mail, MessageCircle, CheckCircle2, PhoneCall } from 'lucide-react'
+import { Bot, Copy, Mail, MessageCircle, CheckCircle2, PhoneCall, AlertCircle } from 'lucide-react'
 import { CanalContact } from '@/types'
 
 interface RelanceActionProps {
@@ -15,17 +15,25 @@ export default function RelanceAction({ factureId, canal, niveauRisque }: Relanc
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{ message: string; client: any } | null>(null)
   const [copied, setCopied] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const handleGenerate = async () => {
     setLoading(true)
+    setErrorMsg(null)
     try {
       const res = await genererMessageIA(factureId)
-      setResult(res)
-    } catch (error) {
+      if (!res.success) {
+        setErrorMsg(res.error || "Erreur lors de la génération de la relance.")
+      } else if (res.message) {
+        setResult({ message: res.message, client: res.client })
+      }
+    } catch (error: unknown) {
       console.error(error)
-      alert("Erreur lors de la génération de la relance.")
+      const errText = error instanceof Error ? error.message : "Erreur de communication avec le serveur."
+      setErrorMsg(errText)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const handleCopy = () => {
@@ -42,6 +50,13 @@ export default function RelanceAction({ factureId, canal, niveauRisque }: Relanc
         <div className="flex items-center gap-2 p-2.5 bg-red-50 text-red-800 rounded-lg text-xs font-semibold border border-red-100">
           <PhoneCall size={16} className="text-red-600 shrink-0" />
           <span>Appel téléphonique vivement recommandé (Score &gt; 85)</span>
+        </div>
+      )}
+
+      {errorMsg && (
+        <div className="flex items-center gap-2 p-2.5 bg-red-50 text-red-700 rounded-lg text-xs font-semibold border border-red-200">
+          <AlertCircle size={15} className="text-red-600 shrink-0" />
+          <span>{errorMsg}</span>
         </div>
       )}
 
