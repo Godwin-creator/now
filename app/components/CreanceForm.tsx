@@ -257,12 +257,12 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
             <div>
               <label className={labelClass}>Canal de relance</label>
               <div className="relative">
-                <select name="canal_contact" defaultValue="tous" className={selectClass}>
-                  <option value="tous"> Tous les canaux (Multi-canal)</option>
-                  <option value="whatsapp"> WhatsApp</option>
-                  <option value="email"> Email</option>
-                  <option value="sms"> SMS</option>
-                  <option value="tel"> Appel téléphonique</option>
+                <select name="canal_contact" defaultValue="whatsapp" className={selectClass}>
+                  <option value="whatsapp">WhatsApp</option>
+                  <option value="email">Email</option>
+                  <option value="sms">SMS</option>
+                  <option value="tel">Appel téléphonique</option>
+                  <option value="tous">Tous les canaux (Multi-canal)</option>
                 </select>
                 <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>

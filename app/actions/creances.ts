@@ -59,12 +59,15 @@ export async function creerCreance(formData: FormData): Promise<ActionResponse> 
         return { success: false, error: "Le nom du client est obligatoire." }
       }
 
+      const profilRaw = String(formData.get('profil') || 'professionnel').trim().toLowerCase()
+      const profilValide = ['particulier informel', 'professionnel', 'corporate'].includes(profilRaw) ? profilRaw : 'professionnel'
+
       const { data: newClient, error: clientError } = await supabase.from('clients').insert({
         company_id: user.id,
         nom: nomClient,
         email: formData.get('email') ? String(formData.get('email')).trim() : null,
         whatsapp: formData.get('whatsapp') ? String(formData.get('whatsapp')).trim() : null,
-        profil: String(formData.get('profil') || 'professionnel'),
+        profil: profilValide,
         secteur: String(formData.get('secteur') || 'Services'),
         retards_precedents: retardsInput
       }).select().single()
@@ -123,27 +126,51 @@ export async function creerCreance(formData: FormData): Promise<ActionResponse> 
       }
     }
     
+    // Validation stricte des énumérations
+    const relationRaw = String(formData.get('type_relation') || 'regulier').trim().toLowerCase()
+    const relationValide = ['regulier', 'nouveau', 'difficile'].includes(relationRaw) ? relationRaw : 'regulier'
+
+    const canalRaw = String(formData.get('canal_contact') || 'whatsapp').trim().toLowerCase()
+    const canalValide = ['whatsapp', 'email', 'sms', 'tel', 'tous'].includes(canalRaw) ? canalRaw : 'whatsapp'
+
     const { score, niveau } = calculerScoreRisque(
       joursRetard, 
       montant, 
       Number(client.retards_precedents) || 0, 
       client.profil || 'professionnel', 
-      String(formData.get('type_relation') || 'regulier')
+      relationValide
     )
 
     // 5. Insertion sécurisée de la facture
-    const { error: factureError } = await supabase.from('factures').insert({
+    let { error: factureError } = await supabase.from('factures').insert({
       company_id: user.id,
       client_id: clientId,
       montant_fcfa: montant,
       date_service: dateService.toISOString(),
       date_echeance: dateEcheance.toISOString(),
-      type_relation: String(formData.get('type_relation') || 'regulier'),
-      canal_contact: String(formData.get('canal_contact') || 'tous'),
+      type_relation: relationValide,
+      canal_contact: canalValide,
       score_risque: score,
       niveau_risque: niveau,
       statut: 'en_attente'
     })
+
+    // Sécurité: Si la contrainte CHECK de la base distante n'a pas encore été mise à jour pour 'tous'
+    if (factureError && factureError.message?.includes('factures_canal_contact_check') && canalValide === 'tous') {
+      const fallback = await supabase.from('factures').insert({
+        company_id: user.id,
+        client_id: clientId,
+        montant_fcfa: montant,
+        date_service: dateService.toISOString(),
+        date_echeance: dateEcheance.toISOString(),
+        type_relation: relationValide,
+        canal_contact: 'whatsapp',
+        score_risque: score,
+        niveau_risque: niveau,
+        statut: 'en_attente'
+      })
+      factureError = fallback.error
+    }
 
     if (factureError) {
       return { 

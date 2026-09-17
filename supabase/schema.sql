@@ -80,24 +80,30 @@ ALTER TABLE public.relances ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.paiements ENABLE ROW LEVEL SECURITY;
 
 -- POLITIQUES RLS: companies
+DROP POLICY IF EXISTS "Utilisateurs peuvent voir leur propre entreprise" ON public.companies;
 CREATE POLICY "Utilisateurs peuvent voir leur propre entreprise"
   ON public.companies FOR SELECT USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Utilisateurs peuvent insérer leur propre entreprise" ON public.companies;
 CREATE POLICY "Utilisateurs peuvent insérer leur propre entreprise"
   ON public.companies FOR INSERT WITH CHECK (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Utilisateurs peuvent modifier leur propre entreprise" ON public.companies;
 CREATE POLICY "Utilisateurs peuvent modifier leur propre entreprise"
   ON public.companies FOR UPDATE USING (auth.uid() = id);
 
 -- POLITIQUES RLS: clients
+DROP POLICY IF EXISTS "Utilisateurs gèrent les clients de leur entreprise" ON public.clients;
 CREATE POLICY "Utilisateurs gèrent les clients de leur entreprise"
   ON public.clients FOR ALL USING (auth.uid() = company_id);
 
 -- POLITIQUES RLS: factures
+DROP POLICY IF EXISTS "Utilisateurs gèrent les factures de leur entreprise" ON public.factures;
 CREATE POLICY "Utilisateurs gèrent les factures de leur entreprise"
   ON public.factures FOR ALL USING (auth.uid() = company_id);
 
 -- POLITIQUES RLS: relances
+DROP POLICY IF EXISTS "Utilisateurs voient les relances de leurs factures" ON public.relances;
 CREATE POLICY "Utilisateurs voient les relances de leurs factures"
   ON public.relances FOR ALL USING (
     EXISTS (
@@ -108,6 +114,7 @@ CREATE POLICY "Utilisateurs voient les relances de leurs factures"
   );
 
 -- POLITIQUES RLS: paiements
+DROP POLICY IF EXISTS "Utilisateurs voient les paiements de leurs factures" ON public.paiements;
 CREATE POLICY "Utilisateurs voient les paiements de leurs factures"
   ON public.paiements FOR ALL USING (
     EXISTS (
