@@ -9,8 +9,22 @@ import { Client } from '@/types'
 export default function CreanceForm({ clientsExistants }: { clientsExistants: Client[] }) {
   const [isNewClient, setIsNewClient]   = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [montantInput, setMontantInput] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  const parsedMontant = Number(montantInput.replace(/[^0-9]/g, '')) || 0
+
+  const handleMontantChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Permet la saisie manuelle directe, libre et fluide
+    const val = e.target.value
+    // Garde uniquement les chiffres et espaces pour une saisie naturelle
+    setMontantInput(val)
+  }
+
+  const setPresetMontant = (amount: number) => {
+    setMontantInput(amount.toLocaleString('fr-FR'))
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -28,6 +42,7 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
       } else {
         setSuccessMessage("Créance enregistrée avec succès !")
         formElement.reset()
+        setMontantInput('')
         setIsNewClient(false)
         setTimeout(() => setSuccessMessage(null), 4000)
       }
@@ -189,8 +204,40 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Informations de la créance</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Montant (FCFA) *</label>
-              <input name="montant_fcfa" type="number" min="1" required placeholder="ex: 150000" className={inputClass} />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                  Montant (FCFA) *
+                </label>
+                {parsedMontant > 0 && (
+                  <span className="text-[10px] font-black text-[#1E4D2B] bg-[#1E4D2B]/10 px-2 py-0.5 border border-[#1E4D2B]/20 font-mono">
+                    {parsedMontant.toLocaleString('fr-FR')} FCFA
+                  </span>
+                )}
+              </div>
+              <input
+                name="montant_fcfa"
+                type="text"
+                inputMode="numeric"
+                required
+                value={montantInput}
+                onChange={handleMontantChange}
+                placeholder="ex: 150000"
+                className={inputClass}
+              />
+              {/* Raccourcis montants fréquents */}
+              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Raccourcis:</span>
+                {[50000, 100000, 250000, 500000, 1000000].map((amt) => (
+                  <button
+                    key={amt}
+                    type="button"
+                    onClick={() => setPresetMontant(amt)}
+                    className="text-[9px] font-mono font-bold px-1.5 py-0.5 bg-gray-100 hover:bg-[#1E4D2B] hover:text-white text-gray-700 transition-colors border border-gray-200"
+                  >
+                    {amt >= 1000000 ? `${amt / 1000000}M` : `${amt / 1000}k`}
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <label className={labelClass}>Date du service *</label>

@@ -82,9 +82,10 @@ export async function creerCreance(formData: FormData): Promise<ActionResponse> 
       }
     }
 
-    // 3. Extraction et validation du montant (support montant_fcfa ou montant)
+    // 3. Extraction et validation du montant (support montant_fcfa ou montant avec espaces/séparateurs)
     const montantRaw = formData.get('montant_fcfa') || formData.get('montant')
-    const montant = Math.max(0, Number(montantRaw) || 0)
+    const montantClean = String(montantRaw || '').replace(/[^0-9]/g, '')
+    const montant = Math.max(0, Number(montantClean) || 0)
     if (montant <= 0) {
       return { success: false, error: "Le montant de la créance doit être supérieur à 0 FCFA." }
     }
