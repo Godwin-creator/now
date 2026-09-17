@@ -1,44 +1,50 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenAI } from '@google/genai'
 import { revalidatePath } from 'next/cache'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-
-// Logique de Scoring
+// Logique de Scoring conforme au Cahier des charges
+// Formule : Score = (Jours retard / 90) × 40 + (Montant / Montant max) × 30 + (Retards précédents × 10) [max 30 pts] + penaliteProfil
 function calculerScoreRisque(joursRetard: number, montant: number, retardsPrecedents: number, profil: string, relation: string) {
   const maxMontant = 5000000;
-  let penaliteProfil = (profil === 'particulier informel' || relation === 'difficile') ? 15 : 0;
+  const penaliteProfil = (profil === 'particulier informel' || relation === 'difficile') ? 15 : 0;
   
-  let score = (joursRetard / 90) * 40 + (montant / maxMontant) * 30 + (retardsPrecedents * 15) + penaliteProfil;
-  score = Math.min(Math.max(score, 0), 100); // Plafonner entre 0 et 100
+  const retardsPoints = Math.min((retardsPrecedents || 0) * 10, 30); // Max 30 pts
+  let score = (joursRetard / 90) * 40 + (montant / maxMontant) * 30 + retardsPoints + penaliteProfil;
+  score = Math.min(Math.max(score, 0), 100); // Plafonner strictement entre 0 et 100
 
-  let niveau = 'Faible';
-  if (score > 33 && score <= 66) niveau = 'Moyen';
-  else if (score > 66 && score <= 85) niveau = 'Élevé';
-  else if (score > 85) niveau = 'Critique';
+  let niveau: 'Faible' | 'Moyen' | 'Élevé' | 'Critique' = 'Faible';
+  if (score > 85) {
+    niveau = 'Critique';
+  } else if (score > 66) {
+    niveau = 'Élevé';
+  } else if (score > 33) {
+    niveau = 'Moyen';
+  }
 
   return { score: Math.round(score), niveau };
 }
 
 export async function creerCreance(formData: FormData) {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Non autorisé")
 
   const isNewClient = formData.get('isNewClient') === 'true'
   let clientId = formData.get('client_id') as string
 
-  // 1. Création du client si hybride
+  // 1. Création du client si nouveau client
   if (isNewClient) {
+    const retardsInput = Number(formData.get('retards_precedents') || 0)
     const { data: newClient, error: clientError } = await supabase.from('clients').insert({
       company_id: user.id,
       nom: formData.get('nom_client'),
-      email: formData.get('email'),
-      whatsapp: formData.get('whatsapp'),
-      profil: formData.get('profil'),
-      retards_precedents: 0
+      email: formData.get('email') || null,
+      whatsapp: formData.get('whatsapp') || null,
+      profil: formData.get('profil') || 'professionnel',
+      secteur: formData.get('secteur') || 'Services',
+      retards_precedents: retardsInput
     }).select().single()
 
     if (clientError) throw new Error(clientError.message)
@@ -47,34 +53,42 @@ export async function creerCreance(formData: FormData) {
 
   // 2. Calculs pour la facture
   const montant = Number(formData.get('montant'))
-  const dateService = new Date(formData.get('date_service') as string)
-  const dateEcheance = new Date(dateService)
-  dateEcheance.setDate(dateEcheance.getDate() + 30) // J+30
-
-  const joursRetard = Math.max(0, Math.floor((new Date().getTime() - dateEcheance.getTime()) / (1000 * 3600 * 24)))
+  const dateServiceStr = formData.get('date_service') as string
+  const dateService = new Date(dateServiceStr)
   
-  // Récupérer infos client pour le score
-  const { data: client } = await supabase.from('clients').select('*').eq('id', clientId).single()
+  // Date d'échéance = J+30 automatiquement selon le cahier des charges
+  const dateEcheance = new Date(dateService)
+  dateEcheance.setDate(dateEcheance.getDate() + 30)
+
+  // Calcule les jours de retard réels par rapport à l'échéance
+  const maintenant = new Date()
+  const diffTemps = maintenant.getTime() - dateEcheance.getTime()
+  const joursRetard = Math.max(0, Math.floor(diffTemps / (1000 * 3600 * 24)))
+  
+  // Récupérer les informations complètes du client pour le calcul du score
+  const { data: client, error: fetchClientError } = await supabase.from('clients').select('*').eq('id', clientId).single()
+  if (fetchClientError || !client) throw new Error("Client introuvable")
   
   const { score, niveau } = calculerScoreRisque(
     joursRetard, 
     montant, 
-    client.retards_precedents, 
+    client.retards_precedents || 0, 
     client.profil, 
     formData.get('type_relation') as string
   )
 
-  // 3. Insertion Facture
+  // 3. Insertion de la facture
   const { error: factureError } = await supabase.from('factures').insert({
     company_id: user.id,
     client_id: clientId,
     montant_fcfa: montant,
     date_service: dateService.toISOString(),
     date_echeance: dateEcheance.toISOString(),
-    type_relation: formData.get('type_relation'),
-    canal_contact: formData.get('canal_contact'),
+    type_relation: formData.get('type_relation') || 'regulier',
+    canal_contact: formData.get('canal_contact') || 'whatsapp',
     score_risque: score,
-    niveau_risque: niveau
+    niveau_risque: niveau,
+    statut: 'en_attente'
   })
 
   if (factureError) throw new Error(factureError.message)
@@ -82,46 +96,110 @@ export async function creerCreance(formData: FormData) {
 }
 
 export async function genererMessageIA(factureId: string) {
-  const supabase = createClient()
+  const supabase = await createClient()
   
-  // Récupérer les données complètes
-  const { data: facture } = await supabase.from('factures')
+  // Récupérer les données complètes de la facture
+  const { data: facture, error: fetchError } = await supabase.from('factures')
     .select(`*, clients(*), companies(*)`)
-    .eq('id', factureId).single()
+    .eq('id', factureId)
+    .single()
 
-  if (!facture) throw new Error("Facture introuvable")
+  if (fetchError || !facture) throw new Error("Facture introuvable")
 
-  const joursRetard = Math.floor((new Date().getTime() - new Date(facture.date_echeance).getTime()) / (1000 * 3600 * 24))
+  const dateEcheance = new Date(facture.date_echeance)
+  const maintenant = new Date()
+  const diffMs = maintenant.getTime() - dateEcheance.getTime()
+  const joursRetard = Math.max(0, Math.floor(diffMs / (1000 * 3600 * 24)))
 
-  // Prompt Engineering pour Gemini
+  const nomEntreprise = facture.companies?.nom || 'Notre entreprise'
+  const nomClient = facture.clients?.nom || 'Cher client'
+
+  // Ton de la relance selon le profil client et la relation
+  let tonRecommande = 'Direct, courtois et professionnel'
+  if (facture.clients?.profil === 'corporate') {
+    tonRecommande = 'Très formel et institutionnel'
+  } else if (facture.clients?.profil === 'particulier informel') {
+    tonRecommande = 'Courtois, factuel et chaleureux'
+  }
+
+  // Formatting par canal
+  let regleCanal = "Rédige un message intermédiaire avec formule de politesse."
+  if (facture.canal_contact === 'sms') {
+    regleCanal = "Fais un message très court et concis de 160 caractères maximum."
+  } else if (facture.canal_contact === 'email') {
+    regleCanal = "Structure le message avec un Objet clair, un corps poli et une formule de politesse."
+  } else if (facture.canal_contact === 'whatsapp') {
+    regleCanal = "Rédige un message WhatsApp lisible et structuré, direct sans fioritures."
+  }
+
+  // Prompt Engineering strict selon les règles du cahier des charges
   const prompt = `
-    Tu es un assistant de recouvrement pour une PME africaine. Rédige un message de relance.
-    Règles strictes :
-    - Utilise le pronom "Nous" (première personne du pluriel).
-    - AUCUN émoji.
-    - Ton adapté : ${facture.clients.profil === 'corporate' ? 'Très formel et institutionnel' : 'Direct, courtois mais ferme'}.
-    - Canal : ${facture.canal_contact}. ${facture.canal_contact === 'sms' ? 'Fais très court (max 160 caractères).' : 'Structure avec objet si email.'}
-    - Niveau de risque : ${facture.niveau_risque}.
-    
-    Informations :
-    - Client : ${facture.clients.nom}
-    - Montant : ${facture.montant_fcfa} FCFA
-    - Jours de retard : ${joursRetard} jours
-    - Entreprise émettrice : ${facture.companies.nom}
-    
-    Génère uniquement le texte du message, prêt à être copié.
-  `
+Tu es l'assistant de relance et de recouvrement amiable de l'entreprise "${nomEntreprise}".
 
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
-  const result = await model.generateContent(prompt)
-  const messageGenere = result.response.text()
+Règles strictes de rédaction :
+- Rédige TOUJOURS au nom de l'entreprise en utilisant la première personne du pluriel ("Nous").
+- N'utilise ABSOLUMENT AUCUN émoji.
+- Ton recommandé : ${tonRecommande}.
+- Canal cible : ${facture.canal_contact.toUpperCase()}. ${regleCanal}
+- Niveau de risque estimé : ${facture.niveau_risque} (Score: ${facture.score_risque}/100).
 
-  // Sauvegarder la relance
-  const { data: relance } = await supabase.from('relances').insert({
-    facture_id: factureId,
-    canal: facture.canal_contact,
-    message_genere: messageGenere
-  }).select().single()
+Données du dossier :
+- Nom du client : ${nomClient}
+- Montant dû : ${Number(facture.montant_fcfa).toLocaleString('fr-FR')} FCFA
+- Date d'échéance : ${dateEcheance.toLocaleDateString('fr-FR')} (${joursRetard} jour(s) de retard)
+- Secteur client : ${facture.clients?.secteur || 'Non renseigné'}
+- Entreprise émettrice : ${nomEntreprise}
 
-  return { message: messageGenere, relanceId: relance.id, client: facture.clients }
+Génère UNIQUEMENT le texte du message prêt à être copié et envoyé.
+`
+
+  let messageGenere = ""
+  try {
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey || apiKey.startsWith('AQ.') || apiKey.includes('placeholder')) {
+      // Fallback professionnel en mode simulation si la clé Gemini n'est pas encore activée
+      if (facture.canal_contact === 'email') {
+        messageGenere = `Objet : Relance — Règlement de facture d'un montant de ${Number(facture.montant_fcfa).toLocaleString('fr-FR')} FCFA
+
+Madame, Monsieur,
+
+Nous nous permettons de vous adresser ce message concernant notre facture d'un montant de ${Number(facture.montant_fcfa).toLocaleString('fr-FR')} FCFA, dont l'échéance est dépassée depuis le ${dateEcheance.toLocaleDateString('fr-FR')}.
+
+Sauf erreur de notre part, ce règlement n'a pas encore été enregistré dans nos comptes. Nous vous serions reconnaissants de bien vouloir procéder au paiement dans les meilleurs délais, ou de nous contacter si vous souhaitez convenir d'un arrangement.
+
+Nous restons à votre entière disposition pour tout renseignement complémentaire.
+
+Cordialement,
+${nomEntreprise}`
+      } else {
+        messageGenere = `Bonjour ${nomClient}, nous vous contactons concernant la facture de ${Number(facture.montant_fcfa).toLocaleString('fr-FR')} FCFA échue le ${dateEcheance.toLocaleDateString('fr-FR')}. Sauf erreur de notre part, le règlement n'a pas encore été reçu. Merci de bien vouloir faire le nécessaire dans les plus brefs délais. Cordialement, ${nomEntreprise}.`
+      }
+    } else {
+      const ai = new GoogleGenAI({ apiKey })
+      const response = await ai.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: prompt
+      })
+      messageGenere = response.text || ""
+    }
+  } catch (error) {
+    console.error("Erreur lors de l'appel Gemini API:", error)
+    messageGenere = `Bonjour ${nomClient}, nous vous sollicitons concernant votre facture de ${Number(facture.montant_fcfa).toLocaleString('fr-FR')} FCFA en retard de paiement. Merci de nous recontacter pour finaliser le règlement. Cordialement, ${nomEntreprise}.`
+  }
+
+  // Sauvegarder la relance dans le journal d'historique Supabase
+  let relanceId = ""
+  try {
+    const { data: relance } = await supabase.from('relances').insert({
+      facture_id: factureId,
+      canal: facture.canal_contact,
+      message_genere: messageGenere,
+      statut_envoi: 'genere'
+    }).select().single()
+    if (relance) relanceId = relance.id
+  } catch (e) {
+    console.warn("Impossible de sauvegarder la relance en BDD :", e)
+  }
+
+  return { message: messageGenere, relanceId, client: facture.clients }
 }

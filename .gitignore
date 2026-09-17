@@ -30,8 +30,17 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files (CRITICAL: sécurise les clés d'API Supabase et Gemini)
+.env
+.env*.local
+.env.production
+!.env.example
+
+# IDE / Éditeurs
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+.idea
 
 # vercel
 .vercel
