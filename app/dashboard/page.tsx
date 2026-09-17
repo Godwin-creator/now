@@ -22,8 +22,8 @@ export default async function Dashboard() {
       const [clientsRes, facturesRes, relancesRes, paiementsRes] = await Promise.all([
         supabase.from('clients').select('*').order('nom', { ascending: true }),
         supabase.from('factures').select('*, clients(*), companies(*)').order('score_risque', { ascending: false }),
-        supabase.from('relances').select('*').order('created_at', { ascending: false }),
-        supabase.from('paiements').select('*').order('created_at', { ascending: false })
+        supabase.from('relances').select('*, factures(*, clients(*))').order('created_at', { ascending: false }),
+        supabase.from('paiements').select('*, factures(*, clients(*))').order('created_at', { ascending: false })
       ])
 
       clients = clientsRes.data || []
@@ -39,7 +39,7 @@ export default async function Dashboard() {
     }
   }
 
-  // Factures actives sécurisées avec valeur de repli []
+  // Factures actives (en attente de règlement)
   const facturesActives = (factures || []).filter(f => f?.statut === 'en_attente')
 
   // Calculs KPIs robustes évitant les crashs sur tableaux vides

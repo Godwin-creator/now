@@ -57,4 +57,5 @@ export interface Paiement {
   montant_paye: number;
   date_paiement: string;
   created_at?: string;
+  factures?: Facture;
 }
