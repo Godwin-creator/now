@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: 'NowPay | Recouvrement intelligent',
   description:
     'Solution de gestion et de relance automatisée de créances par IA pour les entreprises en Afrique.',
+  verification: {
+    google: '_NaZnXQLJJ3WV9ZIJDGF2CoShmVXxyTOV9s7nkBQh9U',
+  },
   openGraph: {
     title: 'NowPay | Recouvrement intelligent',
     description:
