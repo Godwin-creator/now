@@ -68,9 +68,11 @@ export default function LoginPage() {
     }
 
     if (isDeleting && text === '') {
-      setIsDeleting(false)
-      setPhraseIndex((prev) => (prev + 1) % TYPEWRITER_PHRASES.length)
-      return
+      const timeout = setTimeout(() => {
+        setIsDeleting(false)
+        setPhraseIndex((prev) => (prev + 1) % TYPEWRITER_PHRASES.length)
+      }, 0)
+      return () => clearTimeout(timeout)
     }
 
     const timeout = setTimeout(() => {
@@ -101,21 +103,52 @@ export default function LoginPage() {
         })
 
         if (error) {
-          setErrorMsg(error.message)
-        } else {
-          if (data.user) {
-            await supabase.from('companies').insert({
-              id: data.user.id,
-              nom: companyName.trim() || 'Mon Entreprise',
-              email: email.trim(),
-            })
-          }
-          setSuccessMsg('Compte créé avec succès ! Redirection en cours…')
-          setTimeout(() => {
+          const message = error.message?.toLowerCase() ?? ''
+          setErrorMsg(
+            message.includes('already') || message.includes('exist')
+              ? 'Un compte existe déjà pour cette adresse email. Veuillez vous connecter.'
+              : error.message || 'Impossible de créer le compte.'
+          )
+          return
+        }
+
+        if (!data.user?.id) {
+          setSuccessMsg('Compte créé. Vérifiez votre email pour confirmer votre inscription.')
+          setTimeout(() => router.push('/login'), 1200)
+          return
+        }
+
+        const { error: companyError } = await supabase.from('companies').insert({
+          id: data.user.id,
+          nom: companyName.trim() || 'Mon Entreprise',
+          email: email.trim(),
+        })
+
+        if (companyError) {
+          const message = companyError.message?.toLowerCase() ?? ''
+          setErrorMsg(
+            message.includes('duplicate') || message.includes('already') || message.includes('unique')
+              ? 'Une entreprise est déjà associée à ce compte. Veuillez vous connecter.'
+              : companyError.message || 'La création de l’entreprise a échoué.'
+          )
+          return
+        }
+
+        setSuccessMsg(
+          data.session
+            ? 'Compte créé avec succès ! Redirection en cours…'
+            : 'Compte créé. Vérifiez votre email pour confirmer votre inscription.'
+        )
+
+        setTimeout(() => {
+          if (data.session) {
             router.push('/dashboard')
             router.refresh()
-          }, 1200)
-        }
+            return
+          }
+          router.push('/login')
+          router.refresh()
+        }, 1200)
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
@@ -140,12 +173,12 @@ export default function LoginPage() {
   const tickerText = 'NOW SYSTEM · RECOUVREMENT AMIABLE PAR IA · SCORING RISQUE · MULTICANAL WHATSAPP EMAIL SMS TEL · SUPABASE RLS · '
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-[#0c1a10] text-white flex flex-col justify-between select-none">
+    <div className="min-h-screen relative overflow-hidden bg-[#0a1520] text-white flex flex-col justify-between select-none">
       {/* ── Effet Spotlight Curseur (temps réel) ── */}
       <div
         className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-300"
         style={{
-          background: `radial-gradient(150px circle at ${mousePos.x}px ${mousePos.y}px, rgba(243, 178, 41, 0.14), rgba(30, 77, 43, 0.12) 40%, transparent 95%)`,
+          background: `radial-gradient(150px circle at ${mousePos.x}px ${mousePos.y}px, rgba(255, 192, 0, 0.14), rgba(21, 39, 77, 0.12) 40%, transparent 95%)`,
         }}
       />
 
@@ -156,20 +189,20 @@ export default function LoginPage() {
           className="absolute inset-0 opacity-10"
           style={{
             backgroundImage:
-              'linear-gradient(to right, #F3B229 1px, transparent 1px), linear-gradient(to bottom, #F3B229 1px, transparent 1px)',
+              'linear-gradient(to right, #FFC000 1px, transparent 1px), linear-gradient(to bottom, #FFC000 1px, transparent 1px)',
             backgroundSize: '48px 48px',
           }}
         />
 
         {/* Lignes de visée géométriques */}
-        <div className="absolute top-0 left-0 w-48 h-px bg-gradient-to-r from-[#F3B229] to-transparent" />
-        <div className="absolute top-0 left-0 w-px h-48 bg-gradient-to-b from-[#F3B229] to-transparent" />
-        <div className="absolute bottom-0 right-0 w-48 h-px bg-gradient-to-l from-[#F3B229] to-transparent" />
-        <div className="absolute bottom-0 right-0 w-px h-48 bg-gradient-to-t from-[#F3B229] to-transparent" />
+        <div className="absolute top-0 left-0 w-48 h-px bg-gradient-to-r from-[#FFC000] to-transparent" />
+        <div className="absolute top-0 left-0 w-px h-48 bg-gradient-to-b from-[#FFC000] to-transparent" />
+        <div className="absolute bottom-0 right-0 w-48 h-px bg-gradient-to-l from-[#FFC000] to-transparent" />
+        <div className="absolute bottom-0 right-0 w-px h-48 bg-gradient-to-t from-[#FFC000] to-transparent" />
 
         {/* Formes flottantes infinies */}
         <div
-          className="float-y absolute top-[12%] right-[14%] w-24 h-24 border border-[#F3B229]/20"
+          className="float-y absolute top-[12%] right-[14%] w-24 h-24 border border-[#FFC000]/20"
           style={{ animationDuration: '8s', animationDelay: '0s' }}
         />
         <div
@@ -177,15 +210,15 @@ export default function LoginPage() {
           style={{ animationDuration: '6s', animationDelay: '1.2s' }}
         />
         <div
-          className="float-y absolute bottom-[22%] right-[8%] w-10 h-10 bg-[#F3B229]/10"
+          className="float-y absolute bottom-[22%] right-[8%] w-10 h-10 bg-[#FFC000]/10"
           style={{ animationDuration: '5s', animationDelay: '2s' }}
         />
         <div
-          className="float-y absolute bottom-[35%] left-[16%] w-6 h-6 border-2 border-[#F3B229]/30"
+          className="float-y absolute bottom-[35%] left-[16%] w-6 h-6 border-2 border-[#FFC000]/30"
           style={{ animationDuration: '7s', animationDelay: '0.8s' }}
         />
         <div
-          className="float-y absolute top-[6%] left-[45%] w-32 h-px bg-[#F3B229]/30"
+          className="float-y absolute top-[6%] left-[45%] w-32 h-px bg-[#FFC000]/30"
           style={{ animationDuration: '9s', animationDelay: '1.5s' }}
         />
       </div>
@@ -200,8 +233,8 @@ export default function LoginPage() {
           <span>Dashboard</span>
         </Link>
 
-        <div className="flex items-center gap-2 text-[10px] font-mono text-[#F3B229] border border-[#F3B229]/40 bg-[#F3B229]/10 px-3 py-1.5 uppercase tracking-widest">
-          <ShieldCheck size={12} className="text-[#F3B229]" />
+        <div className="flex items-center gap-2 text-[10px] font-mono text-[#FFC000] border border-[#FFC000]/40 bg-[#FFC000]/10 px-3 py-1.5 uppercase tracking-widest">
+          <ShieldCheck size={12} className="text-[#FFC000]" />
           <span>Portail Sécurisé</span>
         </div>
       </header>
@@ -231,7 +264,7 @@ export default function LoginPage() {
             width={600}
             height={600}
             priority
-            className="w-full h-auto object-contain filter drop-shadow-[0_0_90px_rgba(243,178,41,0.2)] brightness-125"
+            className="w-full h-auto object-contain filter drop-shadow-[0_0_90px_rgba(255,192,0,0.2)] brightness-125"
           />
         </motion.div>
 
@@ -244,8 +277,8 @@ export default function LoginPage() {
             transition={{ duration: 0.5, ease: 'easeOut' }}
             className="flex justify-center mb-2"
           >
-            <div className="relative group p-2 bg-[#1E4D2B]/40 border border-[#F3B229]/40 backdrop-blur-sm shadow-lg">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#1E4D2B] to-[#F3B229] opacity-0 group-hover:opacity-20 transition-opacity" />
+            <div className="relative group p-2 bg-[#15274D]/40 border border-[#FFC000]/40 backdrop-blur-sm shadow-lg">
+              <div className="absolute inset-0 bg-gradient-to-r from-[#15274D] to-[#FFC000] opacity-0 group-hover:opacity-20 transition-opacity" />
               <Image
                 src="/logo_now.png"
                 alt="Now Logo"
@@ -269,9 +302,9 @@ export default function LoginPage() {
 
           {/* Animation Typewriter dynamique */}
           <div className="h-6 flex items-center justify-center">
-            <p className="text-xs sm:text-sm font-mono text-[#F3B229] tracking-wider uppercase flex items-center">
+            <p className="text-xs sm:text-sm font-mono text-[#FFC000] tracking-wider uppercase flex items-center">
               <span>{text}</span>
-              <span className="inline-block w-2 h-4 bg-[#F3B229] ml-1 animate-pulse" />
+              <span className="inline-block w-2 h-4 bg-[#FFC000] ml-1 animate-pulse" />
             </p>
           </div>
         </div>
@@ -281,10 +314,10 @@ export default function LoginPage() {
           initial={{ opacity: 0, y: 20, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          className="bg-white text-gray-900 border-2 border-[#F3B229] shadow-2xl relative overflow-hidden"
+          className="bg-white text-gray-900 border-2 border-[#FFC000] shadow-2xl relative overflow-hidden"
         >
           {/* Accent top gradient bar */}
-          <div className="h-1.5 w-full bg-gradient-to-r from-[#1E4D2B] via-[#F3B229] to-[#1E4D2B]" />
+          <div className="h-1.5 w-full bg-gradient-to-r from-[#15274D] via-[#FFC000] to-[#15274D]" />
 
           {/* Onglets interactifs avec glissement layoutId */}
           <div className="grid grid-cols-2 border-b border-gray-200">
@@ -296,15 +329,15 @@ export default function LoginPage() {
                 setSuccessMsg(null)
               }}
               className={`relative py-3.5 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${
-                !isSignUp ? 'text-[#1E4D2B] bg-white' : 'text-gray-400 bg-gray-50 hover:text-gray-700'
+                !isSignUp ? 'text-[#15274D] bg-white' : 'text-gray-400 bg-gray-50 hover:text-gray-700'
               }`}
             >
-              <LogIn size={14} className={!isSignUp ? 'text-[#1E4D2B]' : 'text-gray-400'} />
+              <LogIn size={14} className={!isSignUp ? 'text-[#15274D]' : 'text-gray-400'} />
               <span>Connexion</span>
               {!isSignUp && (
                 <motion.div
                   layoutId="auth-tab"
-                  className="absolute bottom-0 left-0 right-0 h-1 bg-[#1E4D2B]"
+                  className="absolute bottom-0 left-0 right-0 h-1 bg-[#15274D]"
                 />
               )}
             </button>
@@ -317,15 +350,15 @@ export default function LoginPage() {
                 setSuccessMsg(null)
               }}
               className={`relative py-3.5 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${
-                isSignUp ? 'text-[#1E4D2B] bg-white' : 'text-gray-400 bg-gray-50 hover:text-gray-700'
+                isSignUp ? 'text-[#15274D] bg-white' : 'text-gray-400 bg-gray-50 hover:text-gray-700'
               }`}
             >
-              <UserPlus size={14} className={isSignUp ? 'text-[#1E4D2B]' : 'text-gray-400'} />
+              <UserPlus size={14} className={isSignUp ? 'text-[#15274D]' : 'text-gray-400'} />
               <span>Créer un compte</span>
               {isSignUp && (
                 <motion.div
                   layoutId="auth-tab"
-                  className="absolute bottom-0 left-0 right-0 h-1 bg-[#1E4D2B]"
+                  className="absolute bottom-0 left-0 right-0 h-1 bg-[#15274D]"
                 />
               )}
             </button>
@@ -369,7 +402,7 @@ export default function LoginPage() {
                     transition={{ duration: 0.2 }}
                   >
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">
-                      Nom de l'entreprise *
+                      Nom de l&apos;entreprise *
                     </label>
                     <div className="relative">
                       <Building2
@@ -382,7 +415,7 @@ export default function LoginPage() {
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         placeholder="ex: Lomé Tech Solutions"
-                        className="input-anim w-full pl-10 pr-4 py-3 text-sm font-medium text-gray-900 bg-gray-50 border border-gray-200"
+                        className="input-anim w-full pl-10 pr-4 py-3 text-sm font-medium text-gray-900 bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-now-yellow/20 focus:border-now-yellow"
                       />
                     </div>
                   </motion.div>
@@ -405,7 +438,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="contact@entreprise.com"
-                    className="input-anim w-full pl-10 pr-4 py-3 text-sm font-medium text-gray-900 bg-gray-50 border border-gray-200"
+                    className="input-anim w-full pl-10 pr-4 py-3 text-sm font-medium text-gray-900 bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-now-yellow/20 focus:border-now-yellow"
                   />
                 </div>
               </div>
@@ -427,7 +460,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="input-anim w-full pl-10 pr-10 py-3 text-sm font-medium text-gray-900 bg-gray-50 border border-gray-200"
+                    className="input-anim w-full pl-10 pr-10 py-3 text-sm font-medium text-gray-900 bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-now-yellow/20 focus:border-now-yellow"
                   />
                   <button
                     type="button"
@@ -443,7 +476,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary-sweep w-full py-4 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-60 transition-all mt-2"
+                className="btn-primary-sweep w-full py-4 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-2"
               >
                 {loading ? (
                   <>
@@ -452,12 +485,12 @@ export default function LoginPage() {
                   </>
                 ) : isSignUp ? (
                   <>
-                    <Sparkles size={14} className="text-[#F3B229]" />
+                    <Sparkles size={14} className="text-[#FFC000]" />
                     <span>Créer mon compte entreprise</span>
                   </>
                 ) : (
                   <>
-                    <Zap size={14} className="text-[#F3B229]" />
+                    <Zap size={14} className="text-[#FFC000]" />
                     <span>Accéder à mon espace</span>
                   </>
                 )}
@@ -474,7 +507,7 @@ export default function LoginPage() {
                   setErrorMsg(null)
                   setSuccessMsg(null)
                 }}
-                className="text-[#1E4D2B] font-black uppercase tracking-wider hover:underline flex items-center gap-1"
+                className="text-[#15274D] font-black uppercase tracking-wider hover:underline flex items-center gap-1"
               >
                 <span>{isSignUp ? 'Se connecter' : 'Créer un compte'}</span>
                 <ArrowRight size={11} />
@@ -487,7 +520,7 @@ export default function LoginPage() {
       {/* ── Footer Ticker Marquee infini ── */}
       <footer className="relative z-10 border-t border-white/10 bg-black/40 h-8 flex items-center overflow-hidden">
         <div
-          className="flex whitespace-nowrap text-[10px] font-mono text-[#F3B229]/60 tracking-widest gap-0"
+          className="flex whitespace-nowrap text-[10px] font-mono text-[#FFC000]/60 tracking-widest gap-0"
           style={{ animation: 'marquee 22s linear infinite' }}
         >
           <span className="pr-16">{tickerText}</span>

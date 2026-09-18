@@ -131,19 +131,19 @@ export default function ImportCSV({ onImportSuccess }: ImportCSVProps) {
         type="button"
         onClick={() => fileInputRef.current?.click()}
         disabled={loading}
-        className="btn-sweep inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold border border-gray-300 bg-white text-gray-700 hover:text-black hover:border-gray-400 disabled:opacity-60 transition-all shadow-sm cursor-pointer select-none"
+        className="btn-sweep inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold border border-gray-300 bg-white text-gray-700 hover:text-black hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer select-none"
         title="Importer plusieurs créances via un fichier CSV"
       >
         {loading ? (
           <>
-            <Loader2 size={13} className="animate-spin text-[#1E4D2B]" />
+            <Loader2 size={13} className="animate-spin text-[#15274D]" />
             <span>Import en cours…</span>
           </>
         ) : (
           <>
-            <FileSpreadsheet size={13} className="text-[#1E4D2B]" />
+            <FileSpreadsheet size={13} className="text-[#15274D]" />
             <span>Importer CSV</span>
-            <Upload size={11} className="text-[#F3B229] ml-0.5" />
+            <Upload size={11} className="text-[#FFC000] ml-0.5" />
           </>
         )}
       </button>
