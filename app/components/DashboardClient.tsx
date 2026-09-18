@@ -87,6 +87,26 @@ export default function DashboardClient({
     return 'bg-green-50 text-green-700 border border-green-200'
   }
 
+  const activeFactures = useMemo(
+    () => initialFactures.filter((facture) => facture.statut !== 'payee'),
+    [initialFactures],
+  )
+
+  const totalMontantDu = useMemo(
+    () => activeFactures.reduce((sum, facture) => sum + Number(facture.montant_fcfa || 0), 0),
+    [activeFactures],
+  )
+
+  const facturesEnRetard = useMemo(
+    () => activeFactures.filter((facture) => new Date(facture.date_echeance) < new Date()).length,
+    [activeFactures],
+  )
+
+  const aRelancerAujourdHui = useMemo(
+    () => activeFactures.filter((facture) => facture.statut === 'en_attente').length,
+    [activeFactures],
+  )
+
   return (
     <div className="flex flex-col h-full space-y-6 overflow-hidden">
       
@@ -107,6 +127,28 @@ export default function DashboardClient({
           </motion.div>
         )}
       </AnimatePresence>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 border-l-4 border-now-yellow">
+          <p className="text-xs font-semibold text-now-blue-light uppercase tracking-wider mb-2">Créances actives</p>
+          <p className="text-2xl font-extrabold text-now-blue">{activeFactures.length}</p>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 border-l-4 border-now-yellow">
+          <p className="text-xs font-semibold text-now-blue-light uppercase tracking-wider mb-2">Montant dû total</p>
+          <p className="text-2xl font-extrabold text-now-blue">{formatMontant(totalMontantDu)} FCFA</p>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 border-l-4 border-now-yellow">
+          <p className="text-xs font-semibold text-now-blue-light uppercase tracking-wider mb-2">En retard</p>
+          <p className="text-2xl font-extrabold text-now-blue">{facturesEnRetard}</p>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 border-l-4 border-now-yellow">
+          <p className="text-xs font-semibold text-now-blue-light uppercase tracking-wider mb-2">À relancer aujourd'hui</p>
+          <p className="text-2xl font-extrabold text-now-blue">{aRelancerAujourdHui}</p>
+        </div>
+      </div>
 
       {/* Toolbar */}
       <div className="flex justify-between items-center shrink-0">
