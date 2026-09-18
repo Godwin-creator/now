@@ -5,13 +5,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          DEFAULT: "#1E4D2B", // Vert Forêt
-          dark: "#14361E",
-        },
-        accent: {
-          DEFAULT: "#F3B229", // Or / Jaune
-          hover: "#D99B1F",
+        now: {
+          green: "#1E4D2B",
+          "green-light": "#2A6B3C",
+          gold: "#F3B229",
+          bg: "#F4F7F6",
+          surface: "#FFFFFF",
         },
       },
     },

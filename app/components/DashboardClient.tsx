@@ -1,29 +1,22 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import CreanceForm from '@/app/components/CreanceForm'
-import RelanceAction from '@/app/components/RelanceAction'
 import { marquerCommePayee } from '@/app/actions/paiements'
 import {
   Search,
-  Clock,
   CheckCircle,
-  CheckCircle2,
-  History,
-  FileText,
-  MessageSquare,
   AlertCircle,
-  Check,
   TrendingUp,
-  ArrowRight,
   Globe,
   Mail,
   MessageCircle,
+  MessageSquare,
   PhoneCall,
   ChevronDown,
 } from 'lucide-react'
 import { Client, Facture, Relance, Paiement } from '@/types'
+import RelanceAction from './RelanceAction'
 
 interface DashboardClientProps {
   initialClients: Client[]
@@ -32,38 +25,17 @@ interface DashboardClientProps {
   initialPaiements: Paiement[]
 }
 
-// Variants Framer Motion
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.07 } },
-}
-const cardVariants = {
-  hidden: { opacity: 0, y: 28, scale: 0.97 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.35, ease: [0.4, 0, 0.2, 1] as [number,number,number,number] } },
-}
-const sectionVariants = {
-  hidden: { opacity: 0, y: 18 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' as const } },
-  exit:   { opacity: 0, y: -10, transition: { duration: 0.2 } },
-}
-
 export default function DashboardClient({
   initialClients,
   initialFactures,
   initialRelances,
   initialPaiements,
 }: DashboardClientProps) {
-  const [activeTab, setActiveTab] = useState<'creances' | 'historique'>('creances')
-  const [searchTerm, setSearchTerm]     = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
   const [filterStatut, setFilterStatut] = useState<string>('en_attente')
-  const [filterRisque, setFilterRisque] = useState<string>('Tous')
-  const [filterRetard, setFilterRetard] = useState<string>('Tous')
-  const [filterCanal, setFilterCanal]   = useState<string>('Tous')
-  const [filterTypeHist, setFilterTypeHist] = useState<'tous' | 'relances' | 'paiements'>('tous')
-  const [payingId, setPayingId]   = useState<string | null>(null)
+  const [payingId, setPayingId] = useState<string | null>(null)
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
-  const [limitCreances, setLimitCreances] = useState<number>(20)
-  const [limitHistorique, setLimitHistorique] = useState<number>(20)
+  const [expandedRow, setExpandedRow] = useState<string | null>(null)
 
   const getJoursRetard = (dateEcheance: string) => {
     const diff = new Date().getTime() - new Date(dateEcheance).getTime()
@@ -75,22 +47,9 @@ export default function DashboardClient({
       const nom = f.clients?.nom || ''
       if (!nom.toLowerCase().includes(searchTerm.toLowerCase())) return false
       if (filterStatut !== 'Tous' && f.statut !== filterStatut) return false
-      if (filterRisque !== 'Tous' && f.niveau_risque !== filterRisque) return false
-      if (filterCanal !== 'Tous' && f.canal_contact !== filterCanal) return false
-      if (filterRetard !== 'Tous') {
-        const jr = getJoursRetard(f.date_echeance)
-        if (filterRetard === '1-15'  && (jr < 1  || jr > 15)) return false
-        if (filterRetard === '16-30' && (jr < 16 || jr > 30)) return false
-        if (filterRetard === '31-45' && (jr < 31 || jr > 45)) return false
-        if (filterRetard === 'gt45'  && jr <= 45) return false
-      }
       return true
     })
-  }, [initialFactures, searchTerm, filterStatut, filterRisque, filterCanal, filterRetard])
-
-  const facturesPayees = useMemo(() =>
-    initialFactures.filter(f => f.statut === 'payee'),
-  [initialFactures])
+  }, [initialFactures, searchTerm, filterStatut])
 
   const handleMarquerPayee = async (facture: Facture) => {
     if (payingId) return
@@ -115,455 +74,176 @@ export default function DashboardClient({
     }
   }
 
-  // Badge couleur par niveau de risque
   const riskStyle = (niveau: string) => {
     if (niveau === 'Critique') return 'bg-rose-50 text-rose-700 border border-rose-200'
     if (niveau === 'Élevé')   return 'bg-amber-50 text-amber-800 border border-amber-200'
     if (niveau === 'Moyen')   return 'bg-yellow-50 text-yellow-800 border border-yellow-200'
-    return 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+    return 'bg-now-bg text-now-green border border-gray-200'
   }
 
   return (
-    <div className="space-y-6">
-
-      {/* ── Toast Notification ── */}
+    <div className="flex flex-col h-full space-y-6 overflow-hidden">
+      
+      {/* Toast */}
       <AnimatePresence>
         {toastMessage && (
           <motion.div
-            initial={{ opacity: 0, y: -12, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className={`p-4 flex items-center justify-between gap-3 text-xs font-semibold border-l-4 ${
-              toastMessage.type === 'success'
-                ? 'bg-emerald-50 text-emerald-900 border-emerald-500'
-                : 'bg-rose-50 text-rose-900 border-rose-500'
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className={`absolute top-8 right-8 z-50 p-4 rounded-xl shadow-lg border-l-4 flex items-center gap-3 text-sm font-semibold ${
+              toastMessage.type === 'success' ? 'bg-emerald-50 text-emerald-900 border-emerald-500' : 'bg-rose-50 text-rose-900 border-rose-500'
             }`}
           >
-            <div className="flex items-center gap-2.5">
-              {toastMessage.type === 'success'
-                ? <CheckCircle className="text-emerald-600 shrink-0" size={17} />
-                : <AlertCircle className="text-rose-600 shrink-0" size={17} />}
-              <span>{toastMessage.text}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setToastMessage(null)}
-              className="text-xs font-bold underline opacity-60 hover:opacity-100"
-            >Fermer</button>
+            {toastMessage.type === 'success' ? <CheckCircle size={18} className="text-emerald-600" /> : <AlertCircle size={18} className="text-rose-600" />}
+            <span>{toastMessage.text}</span>
+            <button onClick={() => setToastMessage(null)} className="ml-4 opacity-50 hover:opacity-100">✕</button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── Formulaire nouvelle créance ── */}
-      <CreanceForm clientsExistants={initialClients} />
-
-      {/* ── Onglets avec fill border animé ── */}
-      <div className="border-b-2 border-gray-200 flex gap-0">
-        {([
-          { key: 'creances',   icon: <FileText size={15} />,  label: 'Créances', count: facturesFiltrees.length },
-          { key: 'historique', icon: <History size={15} />,   label: 'Historique', count: initialRelances.length + initialPaiements.length + facturesPayees.length },
-        ] as const).map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`relative flex items-center gap-2 px-5 py-3 text-sm font-bold transition-all overflow-hidden ${
-              activeTab === tab.key
-                ? 'text-[#1E4D2B] bg-white border-t-2 border-x-2 border-gray-200 -mb-px'
-                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-            }`}
+      {/* Toolbar */}
+      <div className="flex justify-between items-center shrink-0">
+        <div className="relative w-80">
+          <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            placeholder="Rechercher un client..."
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-now-green/20 focus:border-now-green transition-all"
+          />
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold text-gray-500 uppercase">Statut :</span>
+          <select 
+            value={filterStatut} 
+            onChange={(e) => setFilterStatut(e.target.value)}
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none"
           >
-            {tab.icon}
-            {tab.label}
-            <span className={`text-[10px] font-black px-1.5 py-0.5 ${
-              activeTab === tab.key
-                ? 'bg-[#1E4D2B] text-white'
-                : 'bg-gray-100 text-gray-600'
-            }`}>
-              {tab.count}
-            </span>
-            {/* Accent fill on active */}
-            {activeTab === tab.key && (
-              <motion.div
-                layoutId="tab-accent"
-                className="absolute bottom-0 left-0 w-full h-0.5 bg-[#F3B229]"
-              />
-            )}
-          </button>
-        ))}
+            <option value="en_attente">En attente</option>
+            <option value="Tous">Tous</option>
+            <option value="payee">Réglées</option>
+          </select>
+        </div>
       </div>
 
-      {/* ══ TAB: CRÉANCES ══ */}
-      <AnimatePresence mode="wait">
-        {activeTab === 'creances' && (
-          <motion.section
-            key="creances"
-            variants={sectionVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className="space-y-5"
-          >
-            {/* ── Filtres ── */}
-            <div className="bg-white border border-gray-200 p-5 space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3.5 top-3.5 text-gray-400" size={17} />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  placeholder="Rechercher un client…"
-                  className="input-anim w-full pl-10 pr-4 py-3 text-sm font-medium"
-                />
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[
-                  { label: 'Statut', value: filterStatut, set: setFilterStatut, options: [
-                    ['en_attente','En attente'],['Tous','Tous statuts'],['payee','Réglées'],['annulee','Annulées'],
-                  ]},
-                  { label: 'Risque', value: filterRisque, set: setFilterRisque, options: [
-                    ['Tous','Tous les risques'],['Faible','Faible'],['Moyen','Moyen'],['Élevé','Élevé'],['Critique','Critique'],
-                  ]},
-                  { label: 'Retard', value: filterRetard, set: setFilterRetard, options: [
-                    ['Tous','Toutes durées'],['1-15','1–15 j'],['16-30','16–30 j'],['31-45','31–45 j'],['gt45','> 45 j'],
-                  ]},
-                  { label: 'Canal', value: filterCanal, set: setFilterCanal, options: [
-                    ['Tous','Tous les canaux'],['tous','Multi-canal (Tous)'],['whatsapp','WhatsApp'],['email','Email'],['sms','SMS'],['tel','Téléphone'],
-                  ]},
-                ].map(({ label, value, set, options }) => (
-                  <div key={label}>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">{label}</label>
-                    <select
-                      value={value}
-                      onChange={e => set(e.target.value)}
-                      className="input-anim w-full px-3 py-2 text-xs font-semibold text-gray-900"
-                    >
-                      {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                    </select>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* ── Liste des créances animées ── */}
-            <motion.div
-              className="flex flex-col gap-4"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              {facturesFiltrees.slice(0, limitCreances).map((facture) => {
-                const joursRetard = getJoursRetard(facture.date_echeance)
-                const estPayee = facture.statut === 'payee'
-
-                return (
-                  <motion.div
-                    key={facture.id}
-                    variants={cardVariants}
-                    className="card-anim p-5 md:p-6 flex flex-col gap-4"
-                  >
-                    {/* En-tête de carte */}
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-black text-gray-900 text-base leading-tight">
-                            {facture.clients?.nom || 'Client'}
-                          </h3>
-                          {facture.clients?.profil && (
-                            <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 uppercase tracking-wider">
-                              {facture.clients.profil}
-                            </span>
-                          )}
-                          {estPayee && (
-                            <span className="text-[10px] font-black bg-emerald-600 text-white px-2 py-0.5 uppercase tracking-wider flex items-center gap-1">
-                              <Check size={11} /> Soldée
-                            </span>
-                          )}
+      {/* Table Container */}
+      <div className="flex-1 overflow-auto border border-gray-100 rounded-2xl bg-white">
+        <table className="w-full text-left border-collapse">
+          <thead className="bg-now-bg/50 sticky top-0 z-10">
+            <tr>
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Client</th>
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Montant (FCFA)</th>
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Échéance</th>
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Risque</th>
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Canal</th>
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {facturesFiltrees.map((facture) => {
+              const estPayee = facture.statut === 'payee'
+              const joursRetard = getJoursRetard(facture.date_echeance)
+              const isExpanded = expandedRow === facture.id
+              
+              return (
+                <React.Fragment key={facture.id}>
+                  <tr className="group hover:bg-gray-50/80 hover:shadow-sm transition-all duration-200">
+                    <td className="px-6 py-4">
+                      <p className="font-bold text-gray-900">{facture.clients?.nom || 'Client Inconnu'}</p>
+                      <p className="text-[11px] text-gray-500 font-mono mt-0.5">{facture.clients?.telephone || 'Sans numéro'}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-black text-gray-900 tabular-nums">{Number(facture.montant_fcfa).toLocaleString('fr-FR')}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm text-gray-700">{new Date(facture.date_echeance).toLocaleDateString('fr-FR')}</p>
+                      {joursRetard > 0 && !estPayee && (
+                         <span className="inline-block mt-1 text-[10px] font-bold text-now-gold bg-now-gold/10 px-2 py-0.5 rounded-sm">
+                           {joursRetard}j retard
+                         </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {estPayee ? (
+                        <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Soldée</span>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                           <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${riskStyle(facture.niveau_risque)}`}>
+                             {facture.niveau_risque}
+                           </span>
+                           <span className="text-[10px] text-gray-400 font-mono">{facture.score_risque}/100</span>
                         </div>
-                        <p className="text-2xl font-black text-gray-900 mt-1.5 tabular-nums">
-                          {Number(facture.montant_fcfa).toLocaleString('fr-FR')}
-                          <span className="text-xs font-bold text-gray-400 ml-1">FCFA</span>
-                        </p>
-                      </div>
-
-                      {/* Badge risque */}
-                      <div className="flex flex-col items-end gap-1 shrink-0">
-                        <span className={`text-[10px] font-black px-2.5 py-1 uppercase tracking-wider flex items-center gap-1 ${riskStyle(estPayee ? '' : facture.niveau_risque)}`}>
-                          {estPayee ? (
-                            <>
-                              <Check size={11} /> Réglée
-                            </>
-                          ) : (
-                            <>
-                              {facture.niveau_risque === 'Critique' && <AlertCircle size={11} />}
-                              {facture.niveau_risque === 'Élevé' && <TrendingUp size={11} />}
-                              {facture.niveau_risque}
-                            </>
-                          )}
-                        </span>
-                        {!estPayee && (
-                          <div className="flex items-center gap-1 text-[10px] text-gray-400 font-mono">
-                            <TrendingUp size={11} />
-                            {facture.score_risque}/100
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Métadonnées */}
-                    <div className="flex flex-wrap gap-2 text-[11px]">
-                      <span className={`flex items-center gap-1.5 px-2.5 py-1 font-bold uppercase tracking-wide ${
-                        facture.canal_contact === 'tous'
-                          ? 'bg-[#F3B229]/20 text-[#8A6000] border border-[#F3B229]/40'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}>
-                        {facture.canal_contact === 'tous' && <Globe size={12} className="text-[#8A6000]" />}
-                        {facture.canal_contact === 'whatsapp' && <MessageCircle size={12} className="text-[#25D366]" />}
-                        {facture.canal_contact === 'email' && <Mail size={12} className="text-[#1E4D2B]" />}
-                        {facture.canal_contact === 'sms' && <MessageSquare size={12} className="text-gray-900" />}
-                        {facture.canal_contact === 'tel' && <PhoneCall size={12} className="text-[#8A6000]" />}
-                        <span>{facture.canal_contact === 'tous' ? 'Tous les canaux' : facture.canal_contact}</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 bg-gray-100 px-2.5 py-1 rounded-lg w-fit">
+                        {facture.canal_contact === 'whatsapp' && <MessageCircle size={14} className="text-[#25D366]" />}
+                        {facture.canal_contact === 'email' && <Mail size={14} />}
+                        {facture.canal_contact === 'sms' && <MessageSquare size={14} />}
+                        {facture.canal_contact === 'tel' && <PhoneCall size={14} />}
+                        {facture.canal_contact === 'tous' && <Globe size={14} className="text-now-gold" />}
+                        <span className="capitalize">{facture.canal_contact}</span>
                       </span>
-                      <span className="bg-gray-100 text-gray-700 px-2.5 py-1 font-semibold">
-                        Échéance: {new Date(facture.date_echeance).toLocaleDateString('fr-FR')}
-                      </span>
-                      <span className={`px-2.5 py-1 font-bold ${
-                        estPayee
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : joursRetard > 0
-                            ? 'bg-[#F3B229]/15 text-[#8A6000] border border-[#F3B229]/30'
-                            : 'bg-emerald-50 text-emerald-700'
-                      }`}>
-                        {estPayee
-                          ? 'Soldée'
-                          : joursRetard > 0
-                            ? `${joursRetard}j de retard`
-                            : 'Dans les délais'}
-                      </span>
-                    </div>
-
-                    {/* Actions */}
-                    {facture.statut === 'en_attente' && (
-                      <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                            <ArrowRight size={11} /> Action rapide
-                          </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      {!estPayee && (
+                        <div className="flex items-center justify-end gap-2">
                           <button
-                            type="button"
                             onClick={() => handleMarquerPayee(facture)}
                             disabled={payingId === facture.id}
-                            className="btn-primary-sweep flex items-center gap-1.5 px-4 py-2 text-white text-xs font-bold disabled:opacity-60"
+                            className="text-xs font-bold bg-white border border-gray-200 text-gray-700 px-3 py-1.5 rounded-lg hover:border-emerald-500 hover:text-emerald-600 transition-colors disabled:opacity-50"
                           >
-                            <CheckCircle size={13} className="text-[#F3B229]" />
-                            {payingId === facture.id ? 'Validation…' : 'Marquer payé'}
+                            Payé
+                          </button>
+                          <button
+                            onClick={() => setExpandedRow(isExpanded ? null : facture.id)}
+                            className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${isExpanded ? 'bg-now-green text-white' : 'bg-now-gold text-now-green hover:bg-now-gold/90'}`}
+                          >
+                            {isExpanded ? 'Fermer' : 'Relancer IA'}
                           </button>
                         </div>
-                        <RelanceAction
-                          factureId={facture.id}
-                          canal={facture.canal_contact}
-                          niveauRisque={facture.niveau_risque}
-                          client={facture.clients}
-                        />
-                      </div>
+                      )}
+                    </td>
+                  </tr>
+                  
+                  {/* Expanded Row for RelanceAction */}
+                  <AnimatePresence>
+                    {isExpanded && !estPayee && (
+                      <motion.tr
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                      >
+                        <td colSpan={6} className="bg-gray-50/50 p-0 border-b border-gray-100">
+                          <div className="p-6">
+                            <RelanceAction
+                              factureId={facture.id}
+                              canal={facture.canal_contact}
+                              niveauRisque={facture.niveau_risque}
+                              client={facture.clients}
+                            />
+                          </div>
+                        </td>
+                      </motion.tr>
                     )}
-                  </motion.div>
-                )
-              })}
-
-              {/* Bouton Voir plus / Développer les créances */}
-              {facturesFiltrees.length > limitCreances && (
-                <div className="pt-2 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() => setLimitCreances(prev => prev + 20)}
-                    className="btn-sweep inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-[#1E4D2B] text-[#1E4D2B] hover:bg-[#1E4D2B] hover:text-white font-black text-xs uppercase tracking-widest transition-all cursor-pointer shadow-sm"
-                  >
-                    <span>Voir plus de créances ({facturesFiltrees.length - limitCreances} restantes)</span>
-                    <ChevronDown size={14} />
-                  </button>
-                </div>
-              )}
-
-              {facturesFiltrees.length === 0 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center py-16 bg-white border border-dashed border-gray-300 flex flex-col items-center gap-3"
-                >
-                  <CheckCircle2 size={42} className="text-[#1E4D2B] opacity-40" />
-                  <p className="font-black text-gray-700 text-sm uppercase tracking-wide">Aucune créance trouvée</p>
-                  <p className="text-xs text-gray-400">Réinitialisez les filtres pour voir vos dossiers.</p>
-                </motion.div>
-              )}
-            </motion.div>
-          </motion.section>
-        )}
-
-        {/* ══ TAB: HISTORIQUE ══ */}
-        {activeTab === 'historique' && (
-          <motion.section
-            key="historique"
-            variants={sectionVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className="space-y-4"
-          >
-            {/* Sous-filtres */}
-            <div className="flex border border-gray-200 overflow-hidden w-fit">
-              {([
-                ['tous',      'Tous'],
-                ['relances',  `Relances (${initialRelances.length})`],
-                ['paiements', `Paiements (${initialPaiements.length + facturesPayees.length})`],
-              ] as const).map(([key, label]) => (
-                <button
-                  key={key}
-                  onClick={() => setFilterTypeHist(key)}
-                  className={`px-4 py-2 text-xs font-bold transition-all ${
-                    filterTypeHist === key
-                      ? 'bg-[#1E4D2B] text-white'
-                      : 'bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            <motion.div
-              className="flex flex-col gap-3"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              {(() => {
-                // Combiner toutes les entrées d'historique
-                const itemsRelances = (filterTypeHist === 'tous' || filterTypeHist === 'relances')
-                  ? initialRelances.map(r => ({ type: 'relance' as const, date: new Date(r.created_at).getTime(), data: r }))
-                  : []
-                const itemsPaiements = (filterTypeHist === 'tous' || filterTypeHist === 'paiements')
-                  ? initialPaiements.map(p => ({ type: 'paiement' as const, date: new Date(p.date_paiement || p.created_at || Date.now()).getTime(), data: p }))
-                  : []
-                const itemsFacturesPayees = ((filterTypeHist === 'tous' || filterTypeHist === 'paiements') && initialPaiements.length === 0)
-                  ? facturesPayees.map(f => ({ type: 'facture_payee' as const, date: new Date(f.date_echeance).getTime(), data: f }))
-                  : []
-
-                const allItems = [...itemsRelances, ...itemsPaiements, ...itemsFacturesPayees]
-                  .sort((a, b) => b.date - a.date)
-
-                const visibleItems = allItems.slice(0, limitHistorique)
-
-                if (allItems.length === 0) {
-                  return (
-                    <div className="text-center py-12 bg-white border border-dashed border-gray-300 text-gray-400">
-                      <History size={36} className="mx-auto mb-2 opacity-30" />
-                      <p className="text-xs font-bold uppercase tracking-wide">Aucun historique enregistré</p>
-                    </div>
-                  )
-                }
-
-                return (
-                  <>
-                    {visibleItems.map(item => {
-                      if (item.type === 'relance') {
-                        const relance = item.data
-                        return (
-                          <motion.div
-                            key={relance.id}
-                            variants={cardVariants}
-                            className="card-anim p-5 flex flex-col gap-3"
-                          >
-                            <div className="flex justify-between items-center text-xs text-gray-500">
-                              <span className="flex items-center gap-1.5 font-black text-[#1E4D2B] bg-[#1E4D2B]/8 border border-[#1E4D2B]/20 px-2.5 py-1 uppercase tracking-widest">
-                                <MessageSquare size={13} /> Relance · {relance.canal.toUpperCase()}
-                              </span>
-                              <span className="font-mono text-[10px]">
-                                {new Date(relance.created_at).toLocaleString('fr-FR')}
-                              </span>
-                            </div>
-                            <p className="text-xs text-gray-700 italic bg-gray-50 border border-gray-100 p-3 leading-relaxed">
-                              &ldquo;{relance.message_genere}&rdquo;
-                            </p>
-                          </motion.div>
-                        )
-                      }
-                      if (item.type === 'paiement') {
-                        const p = item.data
-                        return (
-                          <motion.div
-                            key={p.id}
-                            variants={cardVariants}
-                            className="card-anim p-5 flex justify-between items-center"
-                          >
-                            <div className="flex items-center gap-3.5">
-                              <div className="w-9 h-9 bg-emerald-600 flex items-center justify-center text-white">
-                                <Check size={18} />
-                              </div>
-                              <div>
-                                <p className="text-xs font-black text-gray-900 uppercase tracking-wide">
-                                  Règlement — {p.factures?.clients?.nom || 'Client'}
-                                </p>
-                                <p className="text-[10px] text-gray-400 font-mono mt-0.5">
-                                  {new Date(p.date_paiement).toLocaleDateString('fr-FR')}
-                                </p>
-                              </div>
-                            </div>
-                            <p className="font-black text-emerald-600 text-sm tabular-nums">
-                              +{Number(p.montant_paye).toLocaleString('fr-FR')} FCFA
-                            </p>
-                          </motion.div>
-                        )
-                      }
-                      if (item.type === 'facture_payee') {
-                        const f = item.data
-                        return (
-                          <motion.div
-                            key={f.id}
-                            variants={cardVariants}
-                            className="card-anim p-5 flex justify-between items-center"
-                          >
-                            <div className="flex items-center gap-3.5">
-                              <div className="w-9 h-9 bg-[#1E4D2B] flex items-center justify-center text-[#F3B229]">
-                                <Check size={18} />
-                              </div>
-                              <div>
-                                <p className="text-xs font-black text-gray-900 uppercase tracking-wide">
-                                  Créance soldée — {f.clients?.nom || 'Client'}
-                                </p>
-                                <p className="text-[10px] text-gray-400 font-mono mt-0.5">
-                                  Éch. {new Date(f.date_echeance).toLocaleDateString('fr-FR')}
-                                </p>
-                              </div>
-                            </div>
-                            <p className="font-black text-[#1E4D2B] text-sm tabular-nums">
-                              {Number(f.montant_fcfa).toLocaleString('fr-FR')} FCFA
-                            </p>
-                          </motion.div>
-                        )
-                      }
-                      return null
-                    })}
-
-                    {/* Bouton Voir plus pour l'historique */}
-                    {allItems.length > limitHistorique && (
-                      <div className="pt-2 flex justify-center">
-                        <button
-                          type="button"
-                          onClick={() => setLimitHistorique(prev => prev + 20)}
-                          className="btn-sweep inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-[#1E4D2B] text-[#1E4D2B] hover:bg-[#1E4D2B] hover:text-white font-black text-xs uppercase tracking-widest transition-all cursor-pointer shadow-sm"
-                        >
-                          <span>Voir plus d&apos;historique ({allItems.length - limitHistorique} restants)</span>
-                          <ChevronDown size={14} />
-                        </button>
-                      </div>
-                    )}
-                  </>
-                )
-              })()}
-            </motion.div>
-          </motion.section>
-        )}
-      </AnimatePresence>
+                  </AnimatePresence>
+                </React.Fragment>
+              )
+            })}
+            
+            {facturesFiltrees.length === 0 && (
+              <tr>
+                <td colSpan={6} className="text-center py-12 text-gray-400">
+                  <p className="font-semibold">Aucune créance trouvée.</p>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
