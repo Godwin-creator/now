@@ -7,6 +7,30 @@ export const metadata: Metadata = {
   title: 'NowPay | Recouvrement intelligent',
   description:
     'Solution de gestion et de relance automatisée de créances par IA pour les entreprises en Afrique.',
+  openGraph: {
+    title: 'NowPay | Recouvrement intelligent',
+    description:
+      'Solution de gestion et de relance automatisée de créances par IA pour les entreprises en Afrique.',
+    url: '/',
+    siteName: 'NowPay',
+    locale: 'fr_FR',
+    type: 'website',
+    images: [
+      {
+        url: '/logo-nowpay.png',
+        width: 1200,
+        height: 630,
+        alt: 'Logo NowPay',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'NowPay | Recouvrement intelligent',
+    description:
+      'Solution de gestion et de relance automatisée de créances par IA pour les entreprises en Afrique.',
+    images: ['/logo-nowpay.png'],
+  },
   icons: {
     icon: '/logo-nowpay2.png',
     apple: '/logo-nowpay.png',
