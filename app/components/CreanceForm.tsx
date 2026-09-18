@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { creerCreance } from '@/app/actions/creances'
 import { scannerFacture } from '@/app/actions/ocr'
@@ -9,6 +9,7 @@ import { UserPlus, Users, AlertCircle, CheckCircle2, Zap, ChevronDown, ChevronUp
 import { Client } from '@/types'
 
 export default function CreanceForm({ clientsExistants }: { clientsExistants: Client[] }) {
+  const [isMounted, setIsMounted] = useState(false)
   const [isNewClient, setIsNewClient]   = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isScanning, setIsScanning]     = useState(false)
@@ -21,6 +22,18 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
   const [scanSuccess, setScanSuccess] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setIsMounted(true)
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [])
+
+  if (!isMounted) {
+    return <div className="h-64 animate-pulse bg-slate-50 rounded-xl w-full" />
+  }
 
   const parsedMontant = Number(montantInput.replace(/[^0-9]/g, '')) || 0
 
