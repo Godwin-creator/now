@@ -302,15 +302,15 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
         </AnimatePresence>
 
         {/* Toggle client existant / nouveau */}
-        <div className="grid grid-cols-2 gap-1 rounded-xl border border-gray-200 bg-gray-100 p-1">
+        <div className="grid grid-cols-2 gap-2 rounded-xl border-2 border-now-blue bg-white p-1.5">
           <button
             type="button"
             aria-pressed={!isNewClient}
             onClick={() => { setIsNewClient(false); setErrorMessage(null) }}
-            className={`flex min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-3 text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+            className={`flex min-w-0 items-center justify-center gap-2 rounded-xl border-2 px-2 py-3 text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
               !isNewClient
-                ? 'bg-now-blue text-white shadow-sm'
-                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                ? 'border-now-blue bg-now-yellow text-now-blue shadow-sm'
+                : 'border-now-blue bg-white text-now-blue hover:bg-now-yellow/20'
             }`}
           >
             <Users size={13} className="shrink-0" />
@@ -320,10 +320,10 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
             type="button"
             aria-pressed={isNewClient}
             onClick={() => { setIsNewClient(true); setErrorMessage(null) }}
-            className={`flex min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-3 text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+            className={`flex min-w-0 items-center justify-center gap-2 rounded-xl border-2 px-2 py-3 text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
               isNewClient
-                ? 'bg-now-blue text-white shadow-sm'
-                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                ? 'border-now-blue bg-now-yellow text-now-blue shadow-sm'
+                : 'border-now-blue bg-white text-now-blue hover:bg-now-yellow/20'
             }`}
           >
             <UserPlus size={13} className="shrink-0" />
@@ -511,7 +511,7 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
         <button
           type="submit"
           disabled={isSubmitting}
-          className="bg-now-yellow hover:bg-now-yellow-hover text-now-blue font-black text-sm uppercase tracking-widest w-full py-4 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="border-2 border-now-blue bg-now-yellow hover:bg-white text-now-blue font-black text-sm uppercase tracking-widest w-full py-4 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all rounded-xl"
         >
           {isSubmitting ? (
             <>

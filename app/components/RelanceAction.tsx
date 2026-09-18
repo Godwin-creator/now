@@ -12,13 +12,11 @@ import {
   PhoneCall,
   AlertCircle,
   Sparkles,
-  RefreshCw,
   SlidersHorizontal,
   Send,
   MessageSquare,
   Globe,
   UserCheck,
-  UserX,
   HeartHandshake,
   Scale,
   AlertTriangle,
@@ -58,7 +56,7 @@ export default function RelanceAction({ factureId, canal, niveauRisque, client }
   const [result, setResult]               = useState<{
     message: string
     canalUtilise?: string
-    client?: any
+    client?: Record<string, string | undefined>
   } | null>(null)
   const [copied, setCopied]               = useState(false)
   const [errorMsg, setErrorMsg]           = useState<string | null>(null)
@@ -234,7 +232,7 @@ export default function RelanceAction({ factureId, canal, niveauRisque, client }
                 <button
                   onClick={() => handleGenerate()}
                   disabled={loading}
-                  className="btn-primary-sweep flex items-center justify-center gap-2 w-full py-3 text-white font-black text-xs uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="border-2 border-now-blue bg-now-yellow hover:bg-white text-now-blue font-black text-xs uppercase tracking-widest w-full py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all rounded-xl"
                 >
                   {loading ? (
                     <>

@@ -3,11 +3,13 @@ import './globals.css'
 import BackToTop from '@/app/components/BackToTop'
 
 export const metadata: Metadata = {
-  title: 'Now — Relancez juste. Récupérez vite.',
-  description: 'Application mobile-first de relance de créances assistée par IA pour les PME africaines.',
+  metadataBase: new URL('https://www.nowpay.website'),
+  title: 'NowPay | Recouvrement intelligent',
+  description:
+    'Solution de gestion et de relance automatisée de créances par IA pour les entreprises en Afrique.',
   icons: {
-    icon: '/icon.png',
-    apple: '/apple-icon.png',
+    icon: '/logo-nowpay2.png',
+    apple: '/logo-nowpay.png',
   },
 }
 
@@ -18,18 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body
-        className="antialiased min-h-screen bg-now-bg"
-        style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-      >
+      <body className="antialiased min-h-screen bg-now-bg text-slate-900">
         {children}
         <BackToTop />
       </body>
