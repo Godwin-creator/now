@@ -27,7 +27,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className="antialiased min-h-screen"
+        className="antialiased min-h-screen bg-now-bg"
         style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
       >
         {children}

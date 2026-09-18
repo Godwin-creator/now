@@ -302,24 +302,32 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
         </AnimatePresence>
 
         {/* Toggle client existant / nouveau */}
-        <div className="flex border border-gray-200 overflow-hidden">
+        <div className="grid grid-cols-2 gap-1 rounded-xl border border-gray-200 bg-gray-100 p-1">
           <button
             type="button"
+            aria-pressed={!isNewClient}
             onClick={() => { setIsNewClient(false); setErrorMessage(null) }}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-black uppercase tracking-wider transition-all ${
-              !isNewClient ? 'bg-now-blue text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
+            className={`flex min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-3 text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+              !isNewClient
+                ? 'bg-now-blue text-white shadow-sm'
+                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
             }`}
           >
-            <Users size={13} /> Client existant
+            <Users size={13} className="shrink-0" />
+            <span className="truncate">Client existant</span>
           </button>
           <button
             type="button"
+            aria-pressed={isNewClient}
             onClick={() => { setIsNewClient(true); setErrorMessage(null) }}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-black uppercase tracking-wider transition-all ${
-              isNewClient ? 'bg-now-blue text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
+            className={`flex min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-3 text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+              isNewClient
+                ? 'bg-now-blue text-white shadow-sm'
+                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
             }`}
           >
-            <UserPlus size={13} /> Nouveau client
+            <UserPlus size={13} className="shrink-0" />
+            <span className="truncate">Nouveau client</span>
           </button>
         </div>
 
@@ -389,7 +397,7 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
                   </div>
                 </div>
                 <div>
-                  <label className={labelClass}>Secteur d'activité</label>
+                  <label className={labelClass}>Secteur d&apos;activité</label>
                   <div className="relative">
                     <select name="secteur" defaultValue="Services" className={selectClass}>
                       {['Services','Commerce','BTP','Agriculture','Santé','Éducation','Transport','Autre'].map(s => (

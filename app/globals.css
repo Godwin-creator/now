@@ -2,8 +2,8 @@
 
 /* ═══════════════════════════════════════════════════════════════
    NOW — SHARP GEOMETRIC DESIGN SYSTEM  ·  v2.0
-   Zero border-radius · Full motion · Brutalist Premium
-   Primary: #15274D  ·  Accent: #FFC000  ·  Surface: #fff
+   Inspired by JEM visual identity
+   Primary: #123274  ·  Accent: #FFD100  ·  Surface: #F5F7FB
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── Zero radius everywhere ── */
@@ -13,18 +13,33 @@
 }
 
 :root {
-  --primary:       #15274D;
-  --primary-dark:  #0f1f3a;
-  --primary-light: #7096C6;
-  --accent:        #FFC000;
-  --accent-dark:   #E6AD00;
-  --accent-dim:    rgba(255,192,0,0.14);
-  --border:        #e5e7eb;
-  --border-strong: #d1d5db;
-  --text:          #111827;
-  --muted:         #5e5e5e00;
-  --bg:            #f8f9fb;
-  --surface:       #ffffff;
+  /* Source de vérité de la palette */
+  --color-primary: #123274;
+  --color-primary-dark: #0e285e;
+  --color-primary-light: #7c9ac8;
+  --color-accent: #FFD100;
+  --color-accent-hover: #e6b800;
+  --color-bg: #F5F7FB;
+  --color-surface: #ffffff;
+  --color-text: #122033;
+  --color-muted: #55657f;
+  --color-border: #dfe6f1;
+  --color-border-strong: #c7d2e3;
+
+  /* Compatibilité legacy */
+  --primary: var(--color-primary);
+  --primary-dark: var(--color-primary-dark);
+  --primary-light: var(--color-primary-light);
+  --accent: var(--color-accent);
+  --accent-dark: var(--color-accent-hover);
+  --accent-dim: rgba(255, 209, 0, 0.18);
+  --border: var(--color-border);
+  --border-strong: var(--color-border-strong);
+  --text: var(--color-text);
+  --muted: var(--color-muted);
+  --bg: var(--color-bg);
+  --surface: var(--color-surface);
+  --brand-gradient: linear-gradient(135deg, var(--color-primary) 0%, #1b3f8f 32%, var(--color-accent) 100%);
 }
 
 /* ── Base ── */
@@ -36,11 +51,32 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
-  /* Subtle grid texture */
-  background-image:
-    linear-gradient(rgba(21,39,77,0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(21,39,77,0.025) 1px, transparent 1px);
-  background-size: 40px 40px;
+  background-image: none;
+}
+
+button,
+[type="button"],
+[type="submit"],
+[type="reset"],
+[role="button"],
+a[href],
+summary {
+  cursor: pointer;
+}
+
+button:disabled,
+[disabled],
+[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+button,
+.btn-sweep,
+.btn-primary-sweep,
+.card-anim,
+.kpi-card {
+  transition: transform 0.18s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
 
 /* ══════════════════════════════════════════

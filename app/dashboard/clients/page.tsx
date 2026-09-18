@@ -1,8 +1,9 @@
 import { createClient } from '@/utils/supabase/server'
-import { Client } from '@/types'
 import { redirect } from 'next/navigation'
+import type { Client } from '@/types'
+import ClientsTable from './ClientsTable'
 
-export default async function Clients() {
+export default async function ClientsPage() {
   const supabase = await createClient()
 
   const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -16,7 +17,7 @@ export default async function Clients() {
     const clientsRes = await supabase.from('clients').select('*').order('nom', { ascending: true })
     clients = clientsRes.data || []
   } catch (error) {
-    console.error("Erreur chargement clients:", error)
+    console.error('Erreur chargement clients:', error)
   }
 
   return (
@@ -27,16 +28,8 @@ export default async function Clients() {
           <p className="text-sm text-now-blue-light mt-1">Gérez votre base de clients.</p>
         </div>
       </div>
-      
-      <div className="flex-1 overflow-hidden flex flex-col">
-        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-          <div className="text-center py-12">
-            <h3 className="text-lg font-bold text-now-blue mb-2">Gestion des Clients</h3>
-            <p className="text-sm text-now-blue-light mb-4">Cette page est en cours de développement.</p>
-            <p className="text-xs text-gray-400">Nombre de clients chargés: {clients.length}</p>
-          </div>
-        </div>
-      </div>
+
+      <ClientsTable initialClients={clients} />
     </div>
   )
 }

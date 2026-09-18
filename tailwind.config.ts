@@ -6,12 +6,16 @@ const config: Config = {
     extend: {
       colors: {
         now: {
-          blue: '#15274D',
-          'blue-light': '#7096C6',
-          yellow: '#FFC000',
-          'yellow-hover': '#E6AD00',
-          bg: '#F8FAFC',
-          surface: '#FFFFFF'
+          blue: 'var(--color-primary)',
+          'blue-dark': 'var(--color-primary-dark)',
+          'blue-light': 'var(--color-primary-light)',
+          yellow: 'var(--color-accent)',
+          'yellow-hover': 'var(--color-accent-hover)',
+          bg: 'var(--color-bg)',
+          surface: 'var(--color-surface)',
+          text: 'var(--color-text)',
+          border: 'var(--color-border)',
+          muted: 'var(--color-muted)'
         },
       },
     },

@@ -68,9 +68,11 @@ export default function LoginPage() {
     }
 
     if (isDeleting && text === '') {
-      setIsDeleting(false)
-      setPhraseIndex((prev) => (prev + 1) % TYPEWRITER_PHRASES.length)
-      return
+      const timeout = setTimeout(() => {
+        setIsDeleting(false)
+        setPhraseIndex((prev) => (prev + 1) % TYPEWRITER_PHRASES.length)
+      }, 0)
+      return () => clearTimeout(timeout)
     }
 
     const timeout = setTimeout(() => {
@@ -101,21 +103,52 @@ export default function LoginPage() {
         })
 
         if (error) {
-          setErrorMsg(error.message)
-        } else {
-          if (data.user) {
-            await supabase.from('companies').insert({
-              id: data.user.id,
-              nom: companyName.trim() || 'Mon Entreprise',
-              email: email.trim(),
-            })
-          }
-          setSuccessMsg('Compte créé avec succès ! Redirection en cours…')
-          setTimeout(() => {
+          const message = error.message?.toLowerCase() ?? ''
+          setErrorMsg(
+            message.includes('already') || message.includes('exist')
+              ? 'Un compte existe déjà pour cette adresse email. Veuillez vous connecter.'
+              : error.message || 'Impossible de créer le compte.'
+          )
+          return
+        }
+
+        if (!data.user?.id) {
+          setSuccessMsg('Compte créé. Vérifiez votre email pour confirmer votre inscription.')
+          setTimeout(() => router.push('/login'), 1200)
+          return
+        }
+
+        const { error: companyError } = await supabase.from('companies').insert({
+          id: data.user.id,
+          nom: companyName.trim() || 'Mon Entreprise',
+          email: email.trim(),
+        })
+
+        if (companyError) {
+          const message = companyError.message?.toLowerCase() ?? ''
+          setErrorMsg(
+            message.includes('duplicate') || message.includes('already') || message.includes('unique')
+              ? 'Une entreprise est déjà associée à ce compte. Veuillez vous connecter.'
+              : companyError.message || 'La création de l’entreprise a échoué.'
+          )
+          return
+        }
+
+        setSuccessMsg(
+          data.session
+            ? 'Compte créé avec succès ! Redirection en cours…'
+            : 'Compte créé. Vérifiez votre email pour confirmer votre inscription.'
+        )
+
+        setTimeout(() => {
+          if (data.session) {
             router.push('/dashboard')
             router.refresh()
-          }, 1200)
-        }
+            return
+          }
+          router.push('/login')
+          router.refresh()
+        }, 1200)
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
@@ -369,7 +402,7 @@ export default function LoginPage() {
                     transition={{ duration: 0.2 }}
                   >
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">
-                      Nom de l'entreprise *
+                      Nom de l&apos;entreprise *
                     </label>
                     <div className="relative">
                       <Building2

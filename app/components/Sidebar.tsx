@@ -66,17 +66,10 @@ export default function Sidebar() {
                   href={tab.href}
                   onClick={() => setIsOpen(false)}
                   className={`relative flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                    isActive ? 'text-[#15274D] font-bold' : 'text-white/80 hover:text-white hover:bg-white/10'
+                    isActive ? 'bg-now-yellow text-now-blue font-bold shadow-md' : 'text-white/80 hover:text-white hover:bg-white/10'
                   }`}
                 >
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute inset-0 bg-[#FFC000] rounded-xl shadow-md z-0"
-                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    />
-                  )}
-                  <span className={`relative z-10 ${isActive ? 'text-[#15274D]' : 'text-white/80'}`}>{tab.icon}</span>
+                  <span className={`relative z-10 ${isActive ? 'text-now-blue' : 'text-white/80'}`}>{tab.icon}</span>
                   <span className="relative z-10 text-sm tracking-wide">{tab.name}</span>
                 </Link>
               )
