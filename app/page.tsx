@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 
 const stats = [
@@ -33,12 +34,14 @@ export default function Home() {
       <header className="mx-auto max-w-7xl px-6 py-6">
         <nav className="flex items-center justify-between rounded-full border border-slate-200 bg-white/80 px-5 py-3 shadow-sm backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#123274] to-[#1f4db6] text-lg font-black text-white shadow-md">
-              N
-            </div>
-            <div>
-              <p className="text-lg font-black tracking-tight text-[#123274]">NowPay</p>
-            </div>
+            <Image
+              src="/logo_now.png"
+              alt="NowPay logo"
+              width={180}
+              height={72}
+              priority
+              className="h-10 w-auto object-contain"
+            />
           </div>
 
           <div className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
@@ -71,9 +74,16 @@ export default function Home() {
               Recouvrement intelligent
             </span>
 
-            <h1 className="mt-6 max-w-xl text-4xl font-black tracking-tight text-slate-900 md:text-6xl">
-              Optimisez le recouvrement avec l’IA de <span className="text-[#123274]">NowPay</span>
-            </h1>
+            <div className="mt-6 max-w-xl">
+              <Image
+                src="/logo_now.png"
+                alt="Logo NowPay"
+                width={680}
+                height={300}
+                priority
+                className="h-auto w-full max-w-xl object-contain"
+              />
+            </div>
 
             <p className="mt-6 max-w-lg text-lg leading-8 text-slate-600">
               Centralisez les créances, priorisez les dossiers à risque et automatisez les relances pour améliorer votre taux de récupération sans effort manuel.
