@@ -5,7 +5,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, PlusCircle, Users, LogOut, Menu, X } from 'lucide-react'
+import { FileText, PlusCircle, Users, History, LogOut, Menu, X } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
 
 export default function Sidebar() {
@@ -16,6 +16,7 @@ export default function Sidebar() {
     { name: 'Créances', href: '/dashboard', icon: <FileText size={18} /> },
     { name: 'Nouveau', href: '/dashboard/nouveau', icon: <PlusCircle size={18} /> },
     { name: 'Clients', href: '/dashboard/clients', icon: <Users size={18} /> },
+    { name: 'Historique', href: '/dashboard/historique', icon: <History size={18} /> },
   ]
 
   return (
