@@ -259,8 +259,8 @@ export default function LoginPage() {
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[460px] sm:w-[600px] pointer-events-none z-0 select-none overflow-visible"
         >
           <Image
-            src="/logo_now.png"
-            alt="Now Background Watermark"
+            src="/logo-nowpay2.png"
+            alt="NowPay Background Watermark"
             width={600}
             height={600}
             priority
@@ -280,8 +280,8 @@ export default function LoginPage() {
             <div className="relative group p-2 bg-[#15274D]/40 border border-[#FFC000]/40 backdrop-blur-sm shadow-lg">
               <div className="absolute inset-0 bg-gradient-to-r from-[#15274D] to-[#FFC000] opacity-0 group-hover:opacity-20 transition-opacity" />
               <Image
-                src="/logo_now.png"
-                alt="Now Logo"
+                src="/logo-nowpay2.png"
+                alt="NowPay Logo"
                 width={48}
                 height={48}
                 className="w-10 h-10 sm:w-11 sm:h-11 object-contain"

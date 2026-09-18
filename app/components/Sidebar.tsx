@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FileText, PlusCircle, Users, LogOut, Menu, X } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
@@ -49,10 +50,17 @@ export default function Sidebar() {
       `}>
         <div>
           <div className="mb-10 px-2">
-            <h1 className="text-3xl font-black tracking-tighter leading-none text-white">
-              Now<span className="text-[#FFC000]">.</span>
-            </h1>
-            <p className="text-white/80 text-[10px] font-mono mt-1.5 uppercase tracking-widest">
+            <div className="flex items-center justify-center rounded-xl bg-white/5 p-2 shadow-inner ring-1 ring-white/10">
+              <Image
+                src="/logo-nowpay.png"
+                alt="NowPay logo"
+                width={180}
+                height={52}
+                priority
+                className="h-10 w-auto object-contain"
+              />
+            </div>
+            <p className="text-white/80 text-[10px] font-mono mt-3 uppercase tracking-widest">
               Relance IA SaaS
             </p>
           </div>
