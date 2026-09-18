@@ -21,6 +21,7 @@ import {
   Mail,
   MessageCircle,
   PhoneCall,
+  ChevronDown,
 } from 'lucide-react'
 import { Client, Facture, Relance, Paiement } from '@/types'
 
@@ -61,6 +62,8 @@ export default function DashboardClient({
   const [filterTypeHist, setFilterTypeHist] = useState<'tous' | 'relances' | 'paiements'>('tous')
   const [payingId, setPayingId]   = useState<string | null>(null)
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
+  const [limitCreances, setLimitCreances] = useState<number>(20)
+  const [limitHistorique, setLimitHistorique] = useState<number>(20)
 
   const getJoursRetard = (dateEcheance: string) => {
     const diff = new Date().getTime() - new Date(dateEcheance).getTime()
@@ -248,7 +251,7 @@ export default function DashboardClient({
               initial="hidden"
               animate="visible"
             >
-              {facturesFiltrees.map((facture) => {
+              {facturesFiltrees.slice(0, limitCreances).map((facture) => {
                 const joursRetard = getJoursRetard(facture.date_echeance)
                 const estPayee = facture.statut === 'payee'
 
@@ -367,6 +370,20 @@ export default function DashboardClient({
                 )
               })}
 
+              {/* Bouton Voir plus / Développer les créances */}
+              {facturesFiltrees.length > limitCreances && (
+                <div className="pt-2 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setLimitCreances(prev => prev + 20)}
+                    className="btn-sweep inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-[#1E4D2B] text-[#1E4D2B] hover:bg-[#1E4D2B] hover:text-white font-black text-xs uppercase tracking-widest transition-all cursor-pointer shadow-sm"
+                  >
+                    <span>Voir plus de créances ({facturesFiltrees.length - limitCreances} restantes)</span>
+                    <ChevronDown size={14} />
+                  </button>
+                </div>
+              )}
+
               {facturesFiltrees.length === 0 && (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -419,89 +436,130 @@ export default function DashboardClient({
               initial="hidden"
               animate="visible"
             >
-              {/* Relances */}
-              {(filterTypeHist === 'tous' || filterTypeHist === 'relances') &&
-                initialRelances.map(relance => (
-                  <motion.div
-                    key={relance.id}
-                    variants={cardVariants}
-                    className="card-anim p-5 flex flex-col gap-3"
-                  >
-                    <div className="flex justify-between items-center text-xs text-gray-500">
-                      <span className="flex items-center gap-1.5 font-black text-[#1E4D2B] bg-[#1E4D2B]/8 border border-[#1E4D2B]/20 px-2.5 py-1 uppercase tracking-widest">
-                        <MessageSquare size={13} /> Relance · {relance.canal.toUpperCase()}
-                      </span>
-                      <span className="font-mono text-[10px]">
-                        {new Date(relance.created_at).toLocaleString('fr-FR')}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-700 italic bg-gray-50 border border-gray-100 p-3 leading-relaxed">
-                      &ldquo;{relance.message_genere}&rdquo;
-                    </p>
-                  </motion.div>
-                ))}
+              {(() => {
+                // Combiner toutes les entrées d'historique
+                const itemsRelances = (filterTypeHist === 'tous' || filterTypeHist === 'relances')
+                  ? initialRelances.map(r => ({ type: 'relance' as const, date: new Date(r.created_at).getTime(), data: r }))
+                  : []
+                const itemsPaiements = (filterTypeHist === 'tous' || filterTypeHist === 'paiements')
+                  ? initialPaiements.map(p => ({ type: 'paiement' as const, date: new Date(p.date_paiement || p.created_at || Date.now()).getTime(), data: p }))
+                  : []
+                const itemsFacturesPayees = ((filterTypeHist === 'tous' || filterTypeHist === 'paiements') && initialPaiements.length === 0)
+                  ? facturesPayees.map(f => ({ type: 'facture_payee' as const, date: new Date(f.date_echeance).getTime(), data: f }))
+                  : []
 
-              {/* Paiements */}
-              {(filterTypeHist === 'tous' || filterTypeHist === 'paiements') &&
-                initialPaiements.map(p => (
-                  <motion.div
-                    key={p.id}
-                    variants={cardVariants}
-                    className="card-anim p-5 flex justify-between items-center"
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-9 h-9 bg-emerald-600 flex items-center justify-center text-white">
-                        <Check size={18} />
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-gray-900 uppercase tracking-wide">
-                          Règlement — {p.factures?.clients?.nom || 'Client'}
-                        </p>
-                        <p className="text-[10px] text-gray-400 font-mono mt-0.5">
-                          {new Date(p.date_paiement).toLocaleDateString('fr-FR')}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="font-black text-emerald-600 text-sm tabular-nums">
-                      +{Number(p.montant_paye).toLocaleString('fr-FR')} FCFA
-                    </p>
-                  </motion.div>
-                ))}
+                const allItems = [...itemsRelances, ...itemsPaiements, ...itemsFacturesPayees]
+                  .sort((a, b) => b.date - a.date)
 
-              {/* Créances soldées (si pas de paiements) */}
-              {(filterTypeHist === 'tous' || filterTypeHist === 'paiements') &&
-                initialPaiements.length === 0 &&
-                facturesPayees.map(f => (
-                  <motion.div
-                    key={f.id}
-                    variants={cardVariants}
-                    className="card-anim p-5 flex justify-between items-center"
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-9 h-9 bg-[#1E4D2B] flex items-center justify-center text-[#F3B229]">
-                        <Check size={18} />
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-gray-900 uppercase tracking-wide">
-                          Créance soldée — {f.clients?.nom || 'Client'}
-                        </p>
-                        <p className="text-[10px] text-gray-400 font-mono mt-0.5">
-                          Éch. {new Date(f.date_echeance).toLocaleDateString('fr-FR')}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="font-black text-[#1E4D2B] text-sm tabular-nums">
-                      {Number(f.montant_fcfa).toLocaleString('fr-FR')} FCFA
-                    </p>
-                  </motion.div>
-                ))}
+                const visibleItems = allItems.slice(0, limitHistorique)
 
-              {initialRelances.length === 0 && initialPaiements.length === 0 && facturesPayees.length === 0 && (
-                <div className="text-center py-12 bg-white border border-dashed border-gray-300 text-gray-400">
-                  <History size={36} className="mx-auto mb-2 opacity-30" />
-                  <p className="text-xs font-bold uppercase tracking-wide">Aucun historique enregistré</p>
-                </div>
-              )}
+                if (allItems.length === 0) {
+                  return (
+                    <div className="text-center py-12 bg-white border border-dashed border-gray-300 text-gray-400">
+                      <History size={36} className="mx-auto mb-2 opacity-30" />
+                      <p className="text-xs font-bold uppercase tracking-wide">Aucun historique enregistré</p>
+                    </div>
+                  )
+                }
+
+                return (
+                  <>
+                    {visibleItems.map(item => {
+                      if (item.type === 'relance') {
+                        const relance = item.data
+                        return (
+                          <motion.div
+                            key={relance.id}
+                            variants={cardVariants}
+                            className="card-anim p-5 flex flex-col gap-3"
+                          >
+                            <div className="flex justify-between items-center text-xs text-gray-500">
+                              <span className="flex items-center gap-1.5 font-black text-[#1E4D2B] bg-[#1E4D2B]/8 border border-[#1E4D2B]/20 px-2.5 py-1 uppercase tracking-widest">
+                                <MessageSquare size={13} /> Relance · {relance.canal.toUpperCase()}
+                              </span>
+                              <span className="font-mono text-[10px]">
+                                {new Date(relance.created_at).toLocaleString('fr-FR')}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-700 italic bg-gray-50 border border-gray-100 p-3 leading-relaxed">
+                              &ldquo;{relance.message_genere}&rdquo;
+                            </p>
+                          </motion.div>
+                        )
+                      }
+                      if (item.type === 'paiement') {
+                        const p = item.data
+                        return (
+                          <motion.div
+                            key={p.id}
+                            variants={cardVariants}
+                            className="card-anim p-5 flex justify-between items-center"
+                          >
+                            <div className="flex items-center gap-3.5">
+                              <div className="w-9 h-9 bg-emerald-600 flex items-center justify-center text-white">
+                                <Check size={18} />
+                              </div>
+                              <div>
+                                <p className="text-xs font-black text-gray-900 uppercase tracking-wide">
+                                  Règlement — {p.factures?.clients?.nom || 'Client'}
+                                </p>
+                                <p className="text-[10px] text-gray-400 font-mono mt-0.5">
+                                  {new Date(p.date_paiement).toLocaleDateString('fr-FR')}
+                                </p>
+                              </div>
+                            </div>
+                            <p className="font-black text-emerald-600 text-sm tabular-nums">
+                              +{Number(p.montant_paye).toLocaleString('fr-FR')} FCFA
+                            </p>
+                          </motion.div>
+                        )
+                      }
+                      if (item.type === 'facture_payee') {
+                        const f = item.data
+                        return (
+                          <motion.div
+                            key={f.id}
+                            variants={cardVariants}
+                            className="card-anim p-5 flex justify-between items-center"
+                          >
+                            <div className="flex items-center gap-3.5">
+                              <div className="w-9 h-9 bg-[#1E4D2B] flex items-center justify-center text-[#F3B229]">
+                                <Check size={18} />
+                              </div>
+                              <div>
+                                <p className="text-xs font-black text-gray-900 uppercase tracking-wide">
+                                  Créance soldée — {f.clients?.nom || 'Client'}
+                                </p>
+                                <p className="text-[10px] text-gray-400 font-mono mt-0.5">
+                                  Éch. {new Date(f.date_echeance).toLocaleDateString('fr-FR')}
+                                </p>
+                              </div>
+                            </div>
+                            <p className="font-black text-[#1E4D2B] text-sm tabular-nums">
+                              {Number(f.montant_fcfa).toLocaleString('fr-FR')} FCFA
+                            </p>
+                          </motion.div>
+                        )
+                      }
+                      return null
+                    })}
+
+                    {/* Bouton Voir plus pour l'historique */}
+                    {allItems.length > limitHistorique && (
+                      <div className="pt-2 flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => setLimitHistorique(prev => prev + 20)}
+                          className="btn-sweep inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-[#1E4D2B] text-[#1E4D2B] hover:bg-[#1E4D2B] hover:text-white font-black text-xs uppercase tracking-widest transition-all cursor-pointer shadow-sm"
+                        >
+                          <span>Voir plus d&apos;historique ({allItems.length - limitHistorique} restants)</span>
+                          <ChevronDown size={14} />
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
             </motion.div>
           </motion.section>
         )}

@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { creerCreance } from '@/app/actions/creances'
 import { scannerFacture } from '@/app/actions/ocr'
+import ImportCSV from '@/app/components/ImportCSV'
 import { UserPlus, Users, AlertCircle, CheckCircle2, Zap, ChevronDown, ChevronUp, Camera, ScanLine, Sparkles, X, FileUp } from 'lucide-react'
 import { Client } from '@/types'
 
@@ -120,13 +121,16 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
       <div className="h-0.5 w-full bg-gradient-to-r from-[#1E4D2B] via-[#F3B229] to-[#1E4D2B]" />
 
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-wrap gap-2">
         <div>
           <h2 className="text-base font-black text-gray-900 uppercase tracking-wide">Nouvelle Créance</h2>
-          <p className="text-[10px] text-gray-400 font-mono uppercase tracking-widest mt-0.5">Saisie manuelle · V1</p>
+          <p className="text-[10px] text-gray-400 font-mono uppercase tracking-widest mt-0.5">Saisie manuelle ou import de masse</p>
         </div>
-        <div className="flex items-center gap-1.5 text-[10px] text-[#F3B229] font-black uppercase tracking-widest border border-[#F3B229]/40 bg-[#F3B229]/8 px-2.5 py-1">
-          <Zap size={11} className="animate-pulse" /> IA Prête
+        <div className="flex items-center gap-2">
+          <ImportCSV />
+          <div className="flex items-center gap-1.5 text-[10px] text-[#F3B229] font-black uppercase tracking-widest border border-[#F3B229]/40 bg-[#F3B229]/8 px-2.5 py-1.5">
+            <Zap size={11} className="animate-pulse" /> IA Prête
+          </div>
         </div>
       </div>
 
