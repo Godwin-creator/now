@@ -6,11 +6,12 @@ const config: Config = {
     extend: {
       colors: {
         now: {
-          green: "#1E4D2B",
-          "green-light": "#2A6B3C",
-          gold: "#F3B229",
-          bg: "#F4F7F6",
-          surface: "#FFFFFF",
+          blue: '#15274D',
+          'blue-light': '#7096C6',
+          yellow: '#FFC000',
+          'yellow-hover': '#E6AD00',
+          bg: '#F8FAFC',
+          surface: '#FFFFFF'
         },
       },
     },

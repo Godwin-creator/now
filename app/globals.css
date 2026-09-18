@@ -3,7 +3,7 @@
 /* ═══════════════════════════════════════════════════════════════
    NOW — SHARP GEOMETRIC DESIGN SYSTEM  ·  v2.0
    Zero border-radius · Full motion · Brutalist Premium
-   Primary: #1E4D2B  ·  Accent: #F3B229  ·  Surface: #fff
+   Primary: #15274D  ·  Accent: #FFC000  ·  Surface: #fff
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── Zero radius everywhere ── */
@@ -13,16 +13,16 @@
 }
 
 :root {
-  --primary:       #1e4d2b;
-  --primary-dark:  #14361e;
-  --primary-light: #2a6b3d;
-  --accent:        #f3b229;
-  --accent-dark:   #c9921a;
-  --accent-dim:    rgba(243,178,41,0.14);
+  --primary:       #15274D;
+  --primary-dark:  #0f1f3a;
+  --primary-light: #7096C6;
+  --accent:        #FFC000;
+  --accent-dark:   #E6AD00;
+  --accent-dim:    rgba(255,192,0,0.14);
   --border:        #e5e7eb;
   --border-strong: #d1d5db;
   --text:          #111827;
-  --muted:         #6b7280;
+  --muted:         #5e5e5e00;
   --bg:            #f8f9fb;
   --surface:       #ffffff;
 }
@@ -38,8 +38,8 @@ body {
   min-height: 100vh;
   /* Subtle grid texture */
   background-image:
-    linear-gradient(rgba(30,77,43,0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(30,77,43,0.025) 1px, transparent 1px);
+    linear-gradient(rgba(21,39,77,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(21,39,77,0.025) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
@@ -81,8 +81,8 @@ body {
 
 /* Pulse glow */
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(243,178,41,0.5); }
-  50%       { box-shadow: 0 0 0 10px rgba(243,178,41,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,192,0,0.5); }
+  50%       { box-shadow: 0 0 0 10px rgba(255,192,0,0); }
 }
 
 /* Blink */
@@ -132,7 +132,7 @@ body {
    ══════════════════════════════════════════ */
 
 .animated-gradient {
-  background: linear-gradient(-45deg, #071810, #1e4d2b, #0a2215, #14361e, #2a6b3d, #163822);
+  background: linear-gradient(-45deg, #0a1520, #15274D, #0f1f3a, #7096C6, #0d1a35, #15274D);
   background-size: 400% 400%;
   animation: gradient-shift 10s ease infinite;
 }
@@ -148,9 +148,9 @@ body {
   width: 100%; height: 2px;
   background: linear-gradient(90deg,
     transparent 0%,
-    rgba(243,178,41,0.7) 30%,
-    rgba(243,178,41,1) 50%,
-    rgba(243,178,41,0.7) 70%,
+    rgba(255,192,0,0.7) 30%,
+    rgba(255,192,0,1) 50%,
+    rgba(255,192,0,0.7) 70%,
     transparent 100%
   );
   animation: scan 4s linear infinite;
@@ -311,8 +311,8 @@ body {
 }
 .input-anim:focus {
   background: #ffffff;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(30,77,43,0.12);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255,192,0,0.15);
 }
 
 /* ══════════════════════════════════════════

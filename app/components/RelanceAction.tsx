@@ -36,9 +36,9 @@ interface RelanceActionProps {
 }
 
 const CANAUX_CONFIG = [
-  { id: 'tous',     label: 'Multi-canal', icon: Globe,         color: '#F3B229', desc: 'Pack complet 4 formats' },
+  { id: 'tous',     label: 'Multi-canal', icon: Globe,         color: '#FFC000', desc: 'Pack complet 4 formats' },
   { id: 'whatsapp', label: 'WhatsApp',    icon: MessageCircle, color: '#25D366', desc: 'Message direct & structuré' },
-  { id: 'email',    label: 'Email',       icon: Mail,          color: '#1E4D2B', desc: 'Objet + corps + formule' },
+  { id: 'email',    label: 'Email',       icon: Mail,          color: '#15274D', desc: 'Objet + corps + formule' },
   { id: 'sms',      label: 'SMS',         icon: MessageSquare, color: '#111827', desc: 'Court ≤ 160 caractères' },
   { id: 'tel',      label: 'Appel (Script)', icon: PhoneCall,  color: '#8A6000', desc: 'Guide conversationnel' },
 ] as const
@@ -139,10 +139,10 @@ export default function RelanceAction({ factureId, canal, niveauRisque, client }
         >
           <div className="flex items-center gap-2">
             <span className="flex items-center gap-1.5 text-[11px] font-black text-gray-800 uppercase tracking-wider">
-              <SlidersHorizontal size={13} className="text-[#1E4D2B]" />
+              <SlidersHorizontal size={13} className="text-[#15274D]" />
               Préciser le canal avant génération IA
             </span>
-            <span className="text-[9px] font-bold px-1.5 py-0.5 bg-[#1E4D2B]/10 text-[#1E4D2B] uppercase">
+            <span className="text-[9px] font-bold px-1.5 py-0.5 bg-[#15274D]/10 text-[#15274D] uppercase">
               {CANAUX_CONFIG.find(c => c.id === selectedCanal)?.label} · {TONS_CONFIG.find(t => t.id === selectedTon)?.label}
             </span>
           </div>
@@ -188,12 +188,12 @@ export default function RelanceAction({ factureId, canal, niveauRisque, client }
                         onClick={() => setSelectedCanal(cfg.id as CanalContact)}
                         className={`flex flex-col items-center justify-center p-2 text-center transition-all ${
                           isSelected
-                            ? 'bg-[#1E4D2B] text-white border-2 border-[#F3B229] shadow-sm'
+                            ? 'bg-[#15274D] text-white border-2 border-[#FFC000] shadow-sm'
                             : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-100'
                         }`}
                       >
                         <div className="flex items-center gap-1 mb-1">
-                          <Icon size={12} style={{ color: isSelected ? '#F3B229' : cfg.color }} />
+                          <Icon size={12} style={{ color: isSelected ? '#FFC000' : cfg.color }} />
                           <span className="text-[11px] font-black uppercase tracking-wider">{cfg.label}</span>
                         </div>
                         <span className={`text-[9px] line-clamp-1 ${isSelected ? 'text-gray-200' : 'text-gray-400'}`}>
@@ -222,7 +222,7 @@ export default function RelanceAction({ factureId, canal, niveauRisque, client }
                               : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
                           }`}
                         >
-                          <TonIcon size={11} className={isSelected ? 'text-[#F3B229]' : 'text-gray-500'} />
+                          <TonIcon size={11} className={isSelected ? 'text-[#FFC000]' : 'text-gray-500'} />
                           <span>{t.label}</span>
                         </button>
                       )
@@ -234,7 +234,7 @@ export default function RelanceAction({ factureId, canal, niveauRisque, client }
                 <button
                   onClick={() => handleGenerate()}
                   disabled={loading}
-                  className="btn-primary-sweep flex items-center justify-center gap-2 w-full py-3 text-white font-black text-xs uppercase tracking-widest disabled:opacity-70 transition-all"
+                  className="btn-primary-sweep flex items-center justify-center gap-2 w-full py-3 text-white font-black text-xs uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {loading ? (
                     <>
@@ -243,7 +243,7 @@ export default function RelanceAction({ factureId, canal, niveauRisque, client }
                     </>
                   ) : (
                     <>
-                      <Sparkles size={14} className="text-[#F3B229]" />
+                      <Sparkles size={14} className="text-[#FFC000]" />
                       {result ? 'Régénérer avec ce canal' : `Générer la relance (${CANAUX_CONFIG.find(c => c.id === selectedCanal)?.label})`}
                     </>
                   )}
@@ -262,16 +262,16 @@ export default function RelanceAction({ factureId, canal, niveauRisque, client }
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="bg-white border-2 border-[#1E4D2B] flex flex-col gap-3 relative overflow-hidden"
+            className="bg-white border-2 border-[#15274D] flex flex-col gap-3 relative overflow-hidden"
           >
             {/* Barre d'accentuation haute */}
-            <div className="h-1 w-full bg-gradient-to-r from-[#1E4D2B] via-[#F3B229] to-[#1E4D2B]" />
+            <div className="h-1 w-full bg-gradient-to-r from-[#15274D] via-[#FFC000] to-[#15274D]" />
 
             {/* Toolbar */}
             <div className="flex items-center justify-between px-4 pt-1 flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest flex items-center gap-1.5 bg-gray-100 px-2 py-0.5">
-                  <Bot size={12} className="text-[#1E4D2B]" /> Canal : {result.canalUtilise?.toUpperCase()}
+                  <Bot size={12} className="text-[#15274D]" /> Canal : {result.canalUtilise?.toUpperCase()}
                 </span>
                 <span className="text-[10px] font-mono text-gray-400">
                   {charCount} car. {result.canalUtilise === 'sms' ? `(${smsCount} SMS)` : ''}
@@ -293,7 +293,7 @@ export default function RelanceAction({ factureId, canal, niveauRisque, client }
             {/* Zone de texte éditable */}
             <div className="px-4">
               <textarea
-                className="input-anim w-full h-44 px-3.5 py-3 text-xs text-gray-800 bg-gray-50 border border-gray-200 leading-relaxed resize-y font-sans focus:bg-white"
+                className="input-anim w-full h-44 px-3.5 py-3 text-xs text-gray-800 bg-gray-50 border border-gray-200 leading-relaxed resize-y font-sans focus:bg-white focus:ring-2 focus:ring-now-yellow/20 focus:border-now-yellow"
                 value={editedMessage}
                 onChange={(e) => setEditedMessage(e.target.value)}
                 placeholder="Votre message généré apparaîtra ici…"
@@ -322,9 +322,9 @@ export default function RelanceAction({ factureId, canal, niveauRisque, client }
               {(result.canalUtilise === 'email' || result.canalUtilise === 'tous' || emailAddr) && (
                 <a
                   href={`mailto:${emailAddr}?subject=${encodeURIComponent('Rappel règlement de créance')}&body=${encodeURIComponent(editedMessage)}`}
-                  className="flex-1 min-w-[110px] flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#1E4D2B] hover:bg-[#15381f] text-white text-[11px] font-black uppercase tracking-wider transition-colors"
+                  className="flex-1 min-w-[110px] flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#15274D] hover:bg-[#0f1f3a] text-white text-[11px] font-black uppercase tracking-wider transition-colors"
                 >
-                  <Mail size={13} className="text-[#F3B229]" /> Email
+                  <Mail size={13} className="text-[#FFC000]" /> Email
                 </a>
               )}
 
@@ -332,7 +332,7 @@ export default function RelanceAction({ factureId, canal, niveauRisque, client }
               {(result.canalUtilise === 'tel' || result.canalUtilise === 'tous' || telNum) && (
                 <a
                   href={`tel:${telNum}`}
-                  className="flex-1 min-w-[110px] flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#F3B229] hover:bg-[#d99b1f] text-gray-950 text-[11px] font-black uppercase tracking-wider transition-colors"
+                  className="flex-1 min-w-[110px] flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#FFC000] hover:bg-[#E6AD00] text-[#15274D] text-[11px] font-black uppercase tracking-wider transition-colors"
                 >
                   <PhoneCall size={13} /> Appeler
                 </a>

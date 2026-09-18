@@ -111,24 +111,24 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
     }
   }
 
-  const inputClass = "input-anim w-full px-4 py-3 text-sm font-medium text-gray-900"
-  const selectClass = "input-anim w-full px-4 py-3 text-sm font-semibold text-gray-900 appearance-none"
-  const labelClass = "block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5"
+  const inputClass = "input-anim w-full px-4 py-3 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-now-yellow/20 focus:border-now-yellow"
+  const selectClass = "input-anim w-full px-4 py-3 text-sm font-semibold text-gray-900 appearance-none focus:ring-2 focus:ring-now-yellow/20 focus:border-now-yellow"
+  const labelClass = "block text-[10px] font-black text-now-blue-light uppercase tracking-widest mb-1.5"
 
   return (
-    <div className="bg-white border border-gray-200 w-full relative overflow-hidden">
+    <div className="bg-white border border-gray-200 w-full relative overflow-auto">
       {/* Accent top bar */}
-      <div className="h-0.5 w-full bg-gradient-to-r from-[#1E4D2B] via-[#F3B229] to-[#1E4D2B]" />
+      <div className="h-0.5 w-full bg-gradient-to-r from-now-blue via-now-yellow to-now-blue" />
 
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-wrap gap-2">
         <div>
-          <h2 className="text-base font-black text-gray-900 uppercase tracking-wide">Nouvelle Créance</h2>
-          <p className="text-[10px] text-gray-400 font-mono uppercase tracking-widest mt-0.5">Saisie manuelle ou import de masse</p>
+          <h2 className="text-base font-black text-now-blue uppercase tracking-wide">Nouvelle Créance</h2>
+          <p className="text-[10px] text-now-blue-light font-mono uppercase tracking-widest mt-0.5">Saisie manuelle ou import de masse</p>
         </div>
         <div className="flex items-center gap-2">
           <ImportCSV />
-          <div className="flex items-center gap-1.5 text-[10px] text-[#F3B229] font-black uppercase tracking-widest border border-[#F3B229]/40 bg-[#F3B229]/8 px-2.5 py-1.5">
+          <div className="flex items-center gap-1.5 text-[10px] text-[#FFC000] font-black uppercase tracking-widest border border-[#FFC000]/40 bg-[#FFC000]/8 px-2.5 py-1.5">
             <Zap size={11} className="animate-pulse" /> IA Prête
           </div>
         </div>
@@ -165,11 +165,11 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
             className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-100/80 transition-colors select-none cursor-pointer"
           >
             <div className="flex items-center gap-2">
-              <Camera size={15} className="text-[#1E4D2B]" />
+              <Camera size={15} className="text-now-blue" />
               <span className="text-[11px] font-black text-gray-800 uppercase tracking-wider">
                 Scanner une facture (IA)
               </span>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 bg-[#F3B229]/20 text-[#8A6000] border border-[#F3B229]/40 uppercase tracking-widest hidden sm:inline-block">
+              <span className="text-[9px] font-bold px-1.5 py-0.5 bg-now-yellow/20 text-now-blue border border-now-yellow/40 uppercase tracking-widest hidden sm:inline-block">
                 Caméra / PDF
               </span>
             </div>
@@ -196,19 +196,19 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
                 <div className="p-3.5 space-y-3">
                   {/* État de scanning actif */}
                   {isScanning && (
-                    <div className="relative overflow-hidden border-2 border-[#F3B229] bg-[#F3B229]/5 py-4 px-6 flex items-center justify-center gap-3 font-black text-sm uppercase tracking-widest text-[#F3B229]">
+                    <div className="relative overflow-hidden border-2 border-now-yellow bg-now-yellow/5 py-4 px-6 flex items-center justify-center gap-3 font-black text-sm uppercase tracking-widest text-now-yellow">
                       <motion.div
                         initial={{ top: 0 }}
                         animate={{ top: ['0%', '100%', '0%'] }}
                         transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                        className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#F3B229] to-transparent z-10"
+                        className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-now-yellow to-transparent z-10"
                       />
                       <ScanLine size={18} className="animate-pulse" />
                       <span>Analyse IA en cours…</span>
                       <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                        className="w-4 h-4 border-2 border-[#F3B229]/30 border-t-[#F3B229]"
+                        className="w-4 h-4 border-2 border-now-yellow/30 border-t-now-yellow"
                       />
                     </div>
                   )}
@@ -220,9 +220,10 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
                       <motion.button
                         type="button"
                         onClick={() => cameraInputRef.current?.click()}
+                        disabled={isScanning}
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.97 }}
-                        className="relative overflow-hidden border-2 border-dashed border-[#1E4D2B]/30 bg-white text-[#1E4D2B] hover:border-[#1E4D2B] hover:bg-[#1E4D2B]/10 transition-all flex flex-col items-center justify-center gap-2 py-4 px-3"
+                        className="relative overflow-hidden border-2 border-dashed border-now-blue/30 bg-white text-now-blue hover:border-now-blue hover:bg-now-blue/10 transition-all flex flex-col items-center justify-center gap-2 py-4 px-3 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Camera size={22} />
                         <span className="text-[10px] font-black uppercase tracking-widest">Caméra</span>
@@ -233,11 +234,12 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
                       <motion.button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
+                        disabled={isScanning}
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.97 }}
-                        className="relative overflow-hidden border-2 border-dashed border-[#F3B229]/40 bg-white text-[#1E4D2B] hover:border-[#F3B229] hover:bg-[#F3B229]/10 transition-all flex flex-col items-center justify-center gap-2 py-4 px-3"
+                        className="relative overflow-hidden border-2 border-dashed border-now-yellow/40 bg-white text-now-blue hover:border-now-yellow hover:bg-now-yellow/10 transition-all flex flex-col items-center justify-center gap-2 py-4 px-3 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <FileUp size={22} className="text-[#8A6000]" />
+                        <FileUp size={22} className="text-now-blue" />
                         <span className="text-[10px] font-black uppercase tracking-widest">Importer</span>
                         <span className="text-[8px] font-medium text-gray-400 tracking-wide">Image ou PDF</span>
                       </motion.button>
@@ -245,11 +247,11 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
                   )}
 
                   <div className="flex items-center justify-center gap-2 pt-1">
-                    <Sparkles size={10} className="text-[#F3B229]" />
+                    <Sparkles size={10} className="text-now-yellow" />
                     <p className="text-[9px] text-gray-400 text-center font-medium tracking-wide">
                       Extraction automatique par IA (nom, montant, date)
                     </p>
-                    <Sparkles size={10} className="text-[#F3B229]" />
+                    <Sparkles size={10} className="text-now-yellow" />
                   </div>
                 </div>
               </motion.div>
@@ -264,10 +266,10 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="flex items-center justify-between p-4 bg-[#1E4D2B]/5 border-l-4 border-[#1E4D2B] text-[#1E4D2B] text-xs font-bold"
+              className="flex items-center justify-between p-4 bg-now-blue/5 border-l-4 border-now-blue text-now-blue text-xs font-bold"
             >
               <div className="flex items-center gap-3">
-                <Sparkles size={15} className="shrink-0 text-[#F3B229]" />
+                <Sparkles size={15} className="shrink-0 text-now-yellow" />
                 {scanSuccess}
               </div>
               <button type="button" onClick={() => setScanSuccess(null)} className="text-gray-400 hover:text-gray-600">
@@ -305,7 +307,7 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
             type="button"
             onClick={() => { setIsNewClient(false); setErrorMessage(null) }}
             className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-black uppercase tracking-wider transition-all ${
-              !isNewClient ? 'bg-[#1E4D2B] text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
+              !isNewClient ? 'bg-now-blue text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
             }`}
           >
             <Users size={13} /> Client existant
@@ -314,7 +316,7 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
             type="button"
             onClick={() => { setIsNewClient(true); setErrorMessage(null) }}
             className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-black uppercase tracking-wider transition-all ${
-              isNewClient ? 'bg-[#1E4D2B] text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
+              isNewClient ? 'bg-now-blue text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
             }`}
           >
             <UserPlus size={13} /> Nouveau client
@@ -364,7 +366,7 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
                     placeholder="ex: Kofi Mensah"
                     value={nomClientInput}
                     onChange={(e) => setNomClientInput(e.target.value)}
-                    className={`${inputClass} ${nomClientInput ? 'ring-2 ring-[#1E4D2B]/20 border-[#1E4D2B]/40' : ''}`}
+                    className={`${inputClass} ${nomClientInput ? 'ring-2 ring-now-blue/20 border-now-blue/40' : ''}`}
                   />
                 </div>
                 <div>
@@ -408,15 +410,15 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
 
         {/* Informations créance */}
         <div className="pt-2 border-t border-gray-100">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Informations de la créance</p>
+          <p className="text-[10px] font-black text-now-blue-light uppercase tracking-widest mb-4">Informations de la créance</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                <label className="text-[10px] font-black text-now-blue-light uppercase tracking-widest">
                   Montant (FCFA) *
                 </label>
                 {parsedMontant > 0 && (
-                  <span className="text-[10px] font-black text-[#1E4D2B] bg-[#1E4D2B]/10 px-2 py-0.5 border border-[#1E4D2B]/20 font-mono">
+                  <span className="text-[10px] font-black text-now-blue bg-now-blue/10 px-2 py-0.5 border border-now-blue/20 font-mono">
                     {parsedMontant.toLocaleString('fr-FR')} FCFA
                   </span>
                 )}
@@ -429,17 +431,17 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
                 value={montantInput}
                 onChange={handleMontantChange}
                 placeholder="ex: 150000"
-                className={`${inputClass} ${montantInput ? 'ring-2 ring-[#1E4D2B]/20 border-[#1E4D2B]/40' : ''}`}
+                className={`${inputClass} ${montantInput ? 'ring-2 ring-now-blue/20 border-now-blue/40' : ''}`}
               />
               {/* Raccourcis montants fréquents */}
               <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Raccourcis:</span>
+                <span className="text-[9px] font-bold text-now-blue-light uppercase tracking-wider">Raccourcis:</span>
                 {[50000, 100000, 250000, 500000, 1000000].map((amt) => (
                   <button
                     key={amt}
                     type="button"
                     onClick={() => setPresetMontant(amt)}
-                    className="text-[9px] font-mono font-bold px-1.5 py-0.5 bg-gray-100 hover:bg-[#1E4D2B] hover:text-white text-gray-700 transition-colors border border-gray-200"
+                    className="text-[9px] font-mono font-bold px-1.5 py-0.5 bg-gray-100 hover:bg-now-blue hover:text-white text-gray-700 transition-colors border border-gray-200"
                   >
                     {amt >= 1000000 ? `${amt / 1000000}M` : `${amt / 1000}k`}
                   </button>
@@ -454,7 +456,7 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
                 required
                 value={dateServiceInput}
                 onChange={(e) => setDateServiceInput(e.target.value)}
-                className={`${inputClass} ${dateServiceInput ? 'ring-2 ring-[#1E4D2B]/20 border-[#1E4D2B]/40' : ''}`}
+                className={`${inputClass} ${dateServiceInput ? 'ring-2 ring-now-blue/20 border-now-blue/40' : ''}`}
               />
             </div>
             <div>
@@ -501,16 +503,16 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
         <button
           type="submit"
           disabled={isSubmitting}
-          className="btn-primary-sweep w-full py-4 text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-60 transition-all"
+          className="bg-now-yellow hover:bg-now-yellow-hover text-now-blue font-black text-sm uppercase tracking-widest w-full py-4 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           {isSubmitting ? (
             <>
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white animate-spin" />
+              <span className="w-4 h-4 border-2 border-now-blue/30 border-t-now-blue animate-spin" />
               Enregistrement…
             </>
           ) : (
             <>
-              <Zap size={15} className="text-[#F3B229]" />
+              <Zap size={15} className="text-now-blue" />
               Enregistrer la créance
             </>
           )}
