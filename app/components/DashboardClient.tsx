@@ -145,7 +145,7 @@ export default function DashboardClient({
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 border-l-4 border-now-yellow">
-          <p className="text-xs font-semibold text-now-blue-light uppercase tracking-wider mb-2">À relancer aujourd'hui</p>
+          <p className="text-xs font-semibold text-now-blue-light uppercase tracking-wider mb-2">À relancer aujourd&apos;hui</p>
           <p className="text-2xl font-extrabold text-now-blue">{aRelancerAujourdHui}</p>
         </div>
       </div>

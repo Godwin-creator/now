@@ -23,8 +23,11 @@ export default function Sidebar() {
     <>
       {/* Mobile Menu Button */}
       <button
+        type="button"
+        aria-label={isOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+        aria-expanded={isOpen}
         onClick={() => setIsOpen(!isOpen)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-now-blue text-white rounded-xl shadow-lg"
+        className="md:hidden fixed top-4 left-4 z-50 p-2.5 bg-[#0f2d5c] text-white rounded-xl shadow-[0_8px_18px_rgba(15,45,92,0.35)] border-2 border-white/80"
       >
         {isOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
@@ -50,6 +53,18 @@ export default function Sidebar() {
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         <div>
+          <div className="mb-6 flex items-center justify-between md:hidden">
+            <div className="text-xs uppercase tracking-[0.2em] text-white/80">Menu</div>
+            <button
+              type="button"
+              aria-label="Fermer le menu"
+              onClick={() => setIsOpen(false)}
+              className="rounded-lg border border-white/20 bg-white/5 p-2 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
           <div className="mb-10 px-0">
             <div className="flex items-center justify-center rounded-2xl bg-white/5 p-2.5 shadow-inner ring-1 ring-white/10 overflow-hidden">
               <Image
