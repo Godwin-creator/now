@@ -73,8 +73,16 @@ export async function importerCreances(payload: CreanceImportPayload[]): Promise
       return { success: false, error: "Erreur lors de la lecture des clients existants." }
     }
 
+    type ClientIndex = {
+      id: string
+      nom: string
+      telephone: string | null
+      retards_precedents: number | null
+      profil: string | null
+    }
+
     // Map nom_minuscule -> client et telephone -> client
-    const clientMap = new Map<string, any>()
+    const clientMap = new Map<string, ClientIndex>()
     for (const c of clientsExistants || []) {
       if (c.nom) clientMap.set(c.nom.toLowerCase().trim(), c)
       if (c.telephone) {

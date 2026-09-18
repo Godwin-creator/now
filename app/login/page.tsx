@@ -4,13 +4,11 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import Image from 'next/image'
 import {
   LogIn,
   UserPlus,
   AlertCircle,
-  ArrowLeft,
   Building2,
   Mail,
   Lock,
@@ -224,15 +222,7 @@ export default function LoginPage() {
       </div>
 
       {/* ── Top Header Navigation ── */}
-      <header className="relative z-10 max-w-6xl mx-auto w-full px-6 py-6 flex items-center justify-between">
-        <Link
-          href="/dashboard"
-          className="btn-sweep inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-white/80 border border-white/20 px-3.5 py-2 hover:text-black transition-all"
-        >
-          <ArrowLeft size={13} />
-          <span>Dashboard</span>
-        </Link>
-
+      <header className="relative z-10 max-w-6xl mx-auto w-full px-6 py-6 flex items-center justify-end">
         <div className="flex items-center gap-2 text-[10px] font-mono text-[#FFC000] border border-[#FFC000]/40 bg-[#FFC000]/10 px-3 py-1.5 uppercase tracking-widest">
           <ShieldCheck size={12} className="text-[#FFC000]" />
           <span>Portail Sécurisé</span>
@@ -294,10 +284,16 @@ export default function LoginPage() {
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
+            className="flex justify-center"
           >
-            <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white inline-block">
-              Now<span className="shimmer-text">.</span>
-            </h1>
+            <Image
+              src="/logo-nowpay.png"
+              alt="NowPay"
+              width={320}
+              height={100}
+              priority
+              className="h-20 w-auto object-contain sm:h-24"
+            />
           </motion.div>
 
           {/* Animation Typewriter dynamique */}
@@ -499,7 +495,7 @@ export default function LoginPage() {
 
             {/* Pied de formulaire */}
             <div className="pt-4 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500 font-semibold">
-              <span>{isSignUp ? 'Déjà inscrit ?' : 'Nouveau sur Now ?'}</span>
+              <span>{isSignUp ? 'Déjà inscrit ?' : 'Nouveau sur NowPay ?'}</span>
               <button
                 type="button"
                 onClick={() => {

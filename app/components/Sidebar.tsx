@@ -49,15 +49,15 @@ export default function Sidebar() {
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         <div>
-          <div className="mb-10 px-2">
-            <div className="flex items-center justify-center rounded-xl bg-white/5 p-2 shadow-inner ring-1 ring-white/10">
+          <div className="mb-10 px-0">
+            <div className="flex items-center justify-center rounded-2xl bg-white/5 p-2.5 shadow-inner ring-1 ring-white/10 overflow-hidden">
               <Image
                 src="/logo-nowpay.png"
                 alt="NowPay logo"
-                width={180}
-                height={52}
+                width={300}
+                height={110}
                 priority
-                className="h-10 w-auto object-contain"
+                className="h-20 w-auto object-contain drop-shadow-[0_0_16px_rgba(255,192,0,0.3)]"
               />
             </div>
             <p className="text-white/80 text-[10px] font-mono mt-3 uppercase tracking-widest">

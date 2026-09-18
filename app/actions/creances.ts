@@ -148,7 +148,7 @@ export async function creerCreance(formData: FormData): Promise<ActionResponse> 
     )
 
     // 5. Insertion sécurisée de la facture
-    const insertPayload: Record<string, any> = {
+    const insertPayload: Record<string, string | number | null | undefined> = {
       company_id: user.id,
       client_id: clientId,
       montant_fcfa: montant,

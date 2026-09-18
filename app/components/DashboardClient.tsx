@@ -7,13 +7,11 @@ import {
   Search,
   CheckCircle,
   AlertCircle,
-  TrendingUp,
   Globe,
   Mail,
   MessageCircle,
   MessageSquare,
   PhoneCall,
-  ChevronDown,
 } from 'lucide-react'
 import { Client, Facture, Relance, Paiement } from '@/types'
 import RelanceAction from './RelanceAction'
@@ -31,6 +29,10 @@ export default function DashboardClient({
   initialRelances,
   initialPaiements,
 }: DashboardClientProps) {
+  void initialClients
+  void initialRelances
+  void initialPaiements
+
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatut, setFilterStatut] = useState<string>('en_attente')
   const [payingId, setPayingId] = useState<string | null>(null)
