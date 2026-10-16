@@ -3,7 +3,7 @@ import {
   companyNameSchema,
   signUpSchema,
   signupCodeSchema,
-} from '../lib/auth/validation';
+} from '../lib/validation/auth';
 
 describe('validation de l’inscription', () => {
   it('accepte une adresse e-mail et nettoie les espaces', () => {

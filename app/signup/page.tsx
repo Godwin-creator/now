@@ -29,8 +29,8 @@ export default function SignupPage() {
 
     try {
       const result = await signUp(email, password);
-      if (!result.success) {
-        setError(result.error);
+      if (!result.ok) {
+        setError(result.error.message);
         return;
       }
 

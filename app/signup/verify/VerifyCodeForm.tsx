@@ -36,8 +36,8 @@ export default function VerifyCodeForm({
 
     try {
       const result = await verifySignupCode(email, code);
-      if (!result.success) {
-        setError(result.error);
+      if (!result.ok) {
+        setError(result.error.message);
         return;
       }
       router.replace('/onboarding');
@@ -56,9 +56,9 @@ export default function VerifyCodeForm({
 
     try {
       const result = await resendSignupCode(email);
-      if (!result.success) {
-        setError(result.error);
-        if (result.error.startsWith('Trop de demandes')) setSecondsLeft(60);
+      if (!result.ok) {
+        setError(result.error.message);
+        if (result.error.code === 'over_email_send_rate_limit') setSecondsLeft(60);
         return;
       }
       setSecondsLeft(60);

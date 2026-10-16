@@ -1,172 +1,93 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import Papa from 'papaparse'
 import { revalidatePath } from 'next/cache'
-import { addDays, isValidIsoDate } from '@/lib/domain'
+import { requireUser } from '@/lib/auth'
+import { failure } from '@/lib/auth/result'
+import { addDays, isValidIsoDate, parseFcfa } from '@/lib/domain'
+import { importCreances } from '@/lib/db/import-creances'
+import { csvFileSchema, csvImportRowsSchema } from '@/lib/validation/schemas'
 
-export type CreanceImportPayload = {
-  nom: string
-  telephone: string
-  montant_fcfa: number
-  date_service: string
+function csvCells(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.map((cell: unknown) => typeof cell === 'string' ? cell : '')
 }
 
-export type ImportCsvResponse = {
-  success: boolean
-  count?: number
-  error?: string
-}
+export async function importerCreances(formData: FormData) {
+  const user = await requireUser()
+  const file = formData.get('csv')
+  if (!(file instanceof File)) return failure('VALIDATION', 'Sélectionnez un fichier CSV.')
 
-export async function importerCreances(payload: CreanceImportPayload[]): Promise<ImportCsvResponse> {
+  const metadata = csvFileSchema.safeParse({ name: file.name, type: file.type, size: file.size })
+  if (!metadata.success) {
+    const tooLarge = file.size > 2 * 1024 * 1024
+    return failure(tooLarge ? 'LIMIT' : 'VALIDATION', tooLarge ? 'Le fichier CSV ne doit pas dépasser 2 Mo.' : 'Choisissez un fichier CSV valide.')
+  }
+
   try {
-    const supabase = await createClient()
+    const parsedCsv = Papa.parse<string[]>(await file.text(), { header: false, skipEmptyLines: false })
+    if (parsedCsv.errors.length > 0) return failure('CSV_PARSE', 'Le fichier CSV est illisible. Vérifiez son encodage et ses séparateurs.')
 
-    // 1. Vérification de la session utilisateur
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return {
-        success: false,
-        error: "Session expirée. Veuillez vous reconnecter pour importer des créances."
+    let firstDataIndex = 0
+    const firstRow = csvCells(parsedCsv.data[0])
+    const headers = firstRow.map((cell) => cell.trim().toLocaleLowerCase('fr-FR').normalize('NFD').replace(/\p{Diacritic}/gu, ''))
+    const hasNameHeader = ['nom', 'client', 'nom client', 'nom du client'].includes(headers[0] ?? '')
+    const hasAmountHeader = ['montant', 'montant fcfa'].includes(headers[2] ?? '')
+    const hasDateHeader = ['date', 'date service', 'date du service'].includes(headers[3] ?? '')
+    if (hasNameHeader && (hasAmountHeader || hasDateHeader)) firstDataIndex = 1
+
+    const rawRows = parsedCsv.data.slice(firstDataIndex).flatMap((value, index) => {
+      const cells = csvCells(value)
+      if (cells.every((cell) => !cell.trim())) return []
+      return [{
+        line: firstDataIndex + index + 1,
+        nom: cells[0]?.trim() ?? '',
+        telephone: cells[1]?.trim() ?? '',
+        montant: cells[2]?.trim() ?? '',
+        date_service: cells[3]?.trim() ?? '',
+      }]
+    })
+
+    if (rawRows.length === 0) return failure('EMPTY', 'Le fichier CSV ne contient aucune ligne à importer.')
+    if (rawRows.length > 500) return failure('LIMIT', 'L’import est limité à 500 lignes.')
+    const parsedRows = csvImportRowsSchema.safeParse(rawRows)
+    if (!parsedRows.success) return failure('VALIDATION', 'Une ou plusieurs lignes dépassent les limites autorisées.')
+
+    const invalidRows: string[] = []
+    const rows = []
+    for (const row of parsedRows.data) {
+      const rowIssues: string[] = []
+      const nom = row.nom.trim()
+      const montant = parseFcfa(row.montant)
+      if (!nom) rowIssues.push('nom manquant')
+      if (montant === null || montant <= 0) rowIssues.push('montant invalide')
+      if (!isValidIsoDate(row.date_service)) rowIssues.push('date invalide (format attendu : AAAA-MM-JJ)')
+      if (rowIssues.length > 0 || montant === null) {
+        invalidRows.push(`ligne ${row.line} : ${rowIssues.join(', ')}`)
+        continue
+      }
+      try {
+        rows.push({
+          nom,
+          telephone: row.telephone.trim(),
+          montantFcfa: montant,
+          dateService: row.date_service,
+          dateEcheance: addDays(row.date_service, 30),
+        })
+      } catch {
+        invalidRows.push(`ligne ${row.line} : date invalide`)
       }
     }
 
-    if (!payload || payload.length === 0) {
-      return {
-        success: false,
-        error: "Le tableau de données est vide."
-      }
-    }
-    if (payload.some((row) => !isValidIsoDate(row.date_service))) {
-      return { success: false, error: 'Une ou plusieurs dates de service sont invalides.' }
-    }
+    if (invalidRows.length > 0) return failure('INVALID_ROWS', `Import annulé. Corrigez : ${invalidRows.join(' ; ')}`)
+    if (rows.length !== parsedRows.data.length) return failure('INVALID_ROWS', 'Certaines lignes n’ont pas pu être traitées.')
 
-    // ÉTAPE 1 : Lecture & Indexation
-    const { data: clientsExistants, error: clientsError } = await supabase
-      .from('clients')
-      .select('id, nom, telephone, profil')
-      .eq('company_id', user.id)
-
-    if (clientsError) {
-      return { success: false, error: "Erreur lors de la lecture des clients existants." }
-    }
-
-    type ClientIndex = {
-      id: string
-      nom: string
-      telephone: string | null
-      profil: string | null
-    }
-
-    // Map nom_minuscule -> client et telephone -> client
-    const clientMap = new Map<string, ClientIndex>()
-    for (const c of clientsExistants || []) {
-      if (c.nom) clientMap.set(c.nom.toLowerCase().trim(), c)
-      if (c.telephone) {
-         const telClean = c.telephone.replace(/[^0-9]/g, '')
-         if (telClean) clientMap.set(telClean, c)
-      }
-    }
-
-    // Identifier les nouveaux clients à insérer
-    const newClientsToInsert = []
-    const processedNewClientKeys = new Set<string>()
-
-    for (const row of payload) {
-      const nomTrimmed = row.nom.trim().toLowerCase()
-      const telClean = (row.telephone || '').replace(/[^0-9]/g, '')
-      
-      let found = clientMap.get(nomTrimmed)
-      if (!found && telClean) found = clientMap.get(telClean)
-
-      if (!found) {
-        // C'est un nouveau client, on l'ajoute à la liste d'insertion (si pas déjà ajouté)
-        const key = nomTrimmed + '|' + telClean
-        if (!processedNewClientKeys.has(key)) {
-           newClientsToInsert.push({
-             company_id: user.id,
-             nom: row.nom.trim(),
-             telephone: row.telephone ? row.telephone.trim() : null,
-             whatsapp: row.telephone ? row.telephone.trim() : null,
-             profil: 'professionnel',
-             secteur: 'Services'
-           })
-           processedNewClientKeys.add(key)
-        }
-      }
-    }
-
-    // ÉTAPE 2 : Bulk Insert Clients
-    if (newClientsToInsert.length > 0) {
-      const { data: insertedClients, error: insertError } = await supabase
-        .from('clients')
-        .insert(newClientsToInsert)
-        .select('id, nom, telephone, profil')
-      
-      if (insertError) {
-        return { success: false, error: "Erreur lors de l'insertion en lot des nouveaux clients." }
-      }
-
-      // Mettre à jour la Map avec les nouveaux IDs
-      for (const c of insertedClients || []) {
-        if (c.nom) clientMap.set(c.nom.toLowerCase().trim(), c)
-        if (c.telephone) {
-           const telClean = c.telephone.replace(/[^0-9]/g, '')
-           if (telClean) clientMap.set(telClean, c)
-        }
-      }
-    }
-
-    // ÉTAPE 3 : Bulk Insert Factures
-    const facturesToInsert = []
-    for (const row of payload) {
-      const nomTrimmed = row.nom.trim().toLowerCase()
-      const telClean = (row.telephone || '').replace(/[^0-9]/g, '')
-      
-      let clientObj = clientMap.get(nomTrimmed)
-      if (!clientObj && telClean) clientObj = clientMap.get(telClean)
-
-      if (!clientObj || !clientObj.id) continue // Sécurité
-
-      const dateEcheance = addDays(row.date_service, 30)
-
-      facturesToInsert.push({
-        company_id: user.id,
-        client_id: clientObj.id,
-        montant_fcfa: row.montant_fcfa,
-        date_service: row.date_service,
-        date_echeance: dateEcheance,
-        delai_paiement_jours: 30,
-        type_relation: 'regulier',
-        canal_contact: row.telephone ? 'whatsapp' : 'email',
-        statut: 'en_attente'
-      })
-    }
-
-    if (facturesToInsert.length === 0) {
-      return { success: false, error: "Aucune facture valide n'a pu être construite." }
-    }
-
-    const { error: facturesError } = await supabase
-      .from('factures')
-      .insert(facturesToInsert)
-
-    if (facturesError) {
-      return { success: false, error: "Erreur lors de l'insertion en lot des factures." }
-    }
-
-    // ÉTAPE 4 : Revalidation et Réponse
+    const result = await importCreances(user.id, rows)
+    if (!result.ok) return result
     revalidatePath('/dashboard')
-
-    return {
-      success: true,
-      count: facturesToInsert.length
-    }
-
-  } catch (err: unknown) {
-    console.error("Erreur importerCreances:", err)
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : "Erreur inattendue lors de l'import."
-    }
+    revalidatePath('/dashboard/clients')
+    return result
+  } catch {
+    return failure('DATABASE', 'L’import n’a pas abouti. Vérifiez les données et réessayez.')
   }
 }

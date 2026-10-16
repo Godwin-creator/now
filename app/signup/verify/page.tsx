@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { signUpSchema } from '@/lib/auth/validation';
+import { signUpSchema } from '@/lib/validation/auth';
 import VerifyCodeForm from './VerifyCodeForm';
 
 type VerifyPageProps = {

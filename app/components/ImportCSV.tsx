@@ -3,8 +3,7 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
-import { importerCreances, CreanceImportPayload } from '@/app/actions/importCsv'
-import Papa from 'papaparse'
+import { importerCreances } from '@/app/actions/importCsv'
 
 interface ImportCSVProps {
   onImportSuccess?: (count: number) => void
@@ -22,101 +21,32 @@ export default function ImportCSV({ onImportSuccess }: ImportCSVProps) {
     setLoading(true)
     setMessage(null)
 
-    Papa.parse(file, {
-      header: false,
-      skipEmptyLines: true,
-      complete: async (results) => {
-        try {
-          const payload: CreanceImportPayload[] = []
-          
-          let startIndex = 0
-          if (results.data.length > 0) {
-            const firstRow = results.data[0] as string[]
-            const isHeader = firstRow.some(t => 
-              typeof t === 'string' && (t.toLowerCase().includes('nom') || t.toLowerCase().includes('client') || t.toLowerCase().includes('montant') || t.toLowerCase().includes('date') || t.toLowerCase().includes('téléphone'))
-            )
-            if (isHeader) startIndex = 1
-          }
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage({ type: 'error', text: 'Le fichier CSV ne doit pas dépasser 2 Mo.' })
+      setLoading(false)
+      e.target.value = ''
+      return
+    }
 
-          for (let i = startIndex; i < results.data.length; i++) {
-            const row = results.data[i] as string[]
-            if (row.length < 3) continue
-
-            const nom = (row[0] || '').trim()
-            const telephone = (row[1] || '').trim()
-            const montantStr = (row[2] || '').trim()
-            const dateStr = (row[3] || '').trim()
-
-            if (!nom) continue
-            
-            const montantClean = montantStr.replace(/[^0-9]/g, '')
-            const montant = Number(montantClean) || 0
-            if (montant <= 0) continue
-            
-            let dateService = new Date(dateStr)
-            if (isNaN(dateService.getTime())) {
-              const parts = dateStr.split(/[\/\-\.]/)
-              const [day, month, year] = parts
-              if (day && month && year?.length === 4) {
-                dateService = new Date(
-                  `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`,
-                )
-              }
-            }
-            if (isNaN(dateService.getTime())) {
-              dateService = new Date()
-            }
-
-            payload.push({
-              nom,
-              telephone,
-              montant_fcfa: montant,
-              date_service: dateService.toISOString().slice(0, 10),
-            })
-          }
-
-          if (payload.length === 0) {
-            setMessage({ type: 'error', text: 'Aucune donnée valide trouvée dans le CSV (Montant ou nom manquant).' })
-            setLoading(false)
-            return
-          }
-
-          const res = await importerCreances(payload)
-
-          if (res.success && res.count) {
-            setMessage({
-              type: 'success',
-              text: `${res.count} créance${res.count > 1 ? 's' : ''} importée${res.count > 1 ? 's' : ''} avec succès !`,
-            })
-            if (onImportSuccess) {
-              onImportSuccess(res.count)
-            }
-          } else {
-            setMessage({
-              type: 'error',
-              text: res.error || "Une erreur est survenue lors de l'import.",
-            })
-          }
-        } catch (err: unknown) {
-          setMessage({
-            type: 'error',
-            text: err instanceof Error ? err.message : "Erreur de traitement des données.",
-          })
-        } finally {
-          setLoading(false)
-          if (fileInputRef.current) {
-            fileInputRef.current.value = ''
-          }
-        }
-      },
-      error: (error) => {
-        setMessage({ type: 'error', text: `Erreur PapaParse : ${error.message}` })
-        setLoading(false)
-        if (fileInputRef.current) {
-          fileInputRef.current.value = ''
-        }
+    try {
+      const formData = new FormData()
+      formData.set('csv', file)
+      const result = await importerCreances(formData)
+      if (!result.ok) {
+        setMessage({ type: 'error', text: result.error.message })
+      } else {
+        setMessage({
+          type: 'success',
+          text: `${result.data.count} créance${result.data.count > 1 ? 's' : ''} importée${result.data.count > 1 ? 's' : ''} avec succès !`,
+        })
+        onImportSuccess?.(result.data.count)
       }
-    })
+    } catch {
+      setMessage({ type: 'error', text: 'L’import n’a pas abouti. Réessayez.' })
+    } finally {
+      setLoading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
   }
 
   return (

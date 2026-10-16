@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import CreanceForm from '@/app/components/CreanceForm'
+import CreanceForm from '@/app/components/CreanceFormCore'
 import { Client } from '@/types'
 import { redirect } from 'next/navigation'
 

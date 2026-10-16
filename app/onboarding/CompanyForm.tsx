@@ -17,8 +17,8 @@ export default function CompanyForm() {
 
     try {
       const result = await createCompany(name);
-      if (!result.success) {
-        setError(result.error);
+      if (!result.ok) {
+        setError(result.error.message);
         return;
       }
       router.replace('/dashboard');

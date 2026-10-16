@@ -1,5 +1,14 @@
 export type Result<T> =
-  { success: true; data: T } | { success: false; error: string };
+  | { ok: true; data: T }
+  | { ok: false; error: { code: string; message: string } };
+
+export function success<T>(data: T): Result<T> {
+  return { ok: true, data };
+}
+
+export function failure(code: string, message: string): Result<never> {
+  return { ok: false, error: { code, message } };
+}
 
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   over_email_send_rate_limit:

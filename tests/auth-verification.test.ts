@@ -33,8 +33,8 @@ describe('verifySignupCode', () => {
     await expect(
       verifySignupCode('gerant@example.com', '12ab'),
     ).resolves.toEqual({
-      success: false,
-      error: 'Saisissez une adresse e-mail valide et le code à 8 chiffres.',
+      ok: false,
+      error: { code: 'VALIDATION', message: 'Saisissez une adresse e-mail valide et le code à 8 chiffres.' },
     });
     expect(mocks.createServerClient).not.toHaveBeenCalled();
   });
@@ -59,7 +59,7 @@ describe('verifySignupCode', () => {
 
     await expect(
       verifySignupCode('gerant@example.com', '12345678'),
-    ).resolves.toEqual({ success: false, error: expected });
+    ).resolves.toEqual({ ok: false, error: { code, message: expected } });
     expect(verifyOtp).toHaveBeenCalledWith({
       email: 'gerant@example.com',
       token: '12345678',

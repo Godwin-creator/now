@@ -1,21 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { CreditCard, Mail, MessageCircle, MessageSquare, PhoneCall, RotateCcw, Search } from 'lucide-react'
+import { RotateCcw, Search } from 'lucide-react'
 import type { Paiement, Relance } from '@/types'
-
-type HistoryStatus = 'Réussi' | 'En attente' | 'Échoué'
-type HistoryAction = 'whatsapp' | 'email' | 'sms' | 'tel' | 'paiement'
-
-type HistoryRow = {
-  id: string
-  date: string
-  client: string
-  action: HistoryAction
-  canalLabel: string
-  details: string
-  status: HistoryStatus
-}
+import type { HistoryAction, HistoryRow, HistoryStatus } from './history-types'
+import HistoriqueTable from './HistoriqueTable'
 
 interface HistoriqueClientProps {
   initialRelances: Relance[]
@@ -31,26 +20,33 @@ const actionOptions = [
   { value: 'paiement', label: 'Paiement' },
 ] as const
 
-const statusOptions = ['Tous', 'Réussi', 'En attente', 'Échoué'] as const
-
-function formatDateTime(value?: string) {
-  if (!value) return '—'
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '—'
-
-  return date.toLocaleString('fr-FR', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  })
-}
+const statusOptions = ['Tous', 'Générée', 'Copiée', 'Envoyée', 'Réussi', 'En attente', 'Échoué'] as const
 
 function normalizeStatus(value?: string): HistoryStatus {
-  const raw = (value || '').toLowerCase()
+  switch (value) {
+    case 'generee': return 'Générée'
+    case 'copiee': return 'Copiée'
+    case 'envoyee': return 'Envoyée'
+    default: return 'En attente'
+  }
+}
 
-  if (raw.includes('echec') || raw.includes('error') || raw.includes('failed') || raw.includes('reject')) return 'Échoué'
-  if (raw.includes('attente') || raw.includes('pending') || raw.includes('en_cours')) return 'En attente'
-  return 'Réussi'
+function normalizeAction(value?: string): HistoryAction {
+  switch (value) {
+    case 'email': return 'email'
+    case 'sms': return 'sms'
+    case 'tel': return 'tel'
+    case 'whatsapp': return 'whatsapp'
+    default: return 'whatsapp'
+  }
+}
+
+function actionFilterValue(value: string): (typeof actionOptions)[number]['value'] {
+  return actionOptions.find((option) => option.value === value)?.value ?? 'tous'
+}
+
+function statusFilterValue(value: string): (typeof statusOptions)[number] {
+  return statusOptions.find((option) => option === value) ?? 'Tous'
 }
 
 export default function HistoriqueClient({ initialRelances, initialPaiements }: HistoriqueClientProps) {
@@ -71,13 +67,13 @@ export default function HistoriqueClient({ initialRelances, initialPaiements }: 
 
   const historyRows = useMemo<HistoryRow[]>(() => {
     const relanceRows: HistoryRow[] = initialRelances.map((relance) => {
-      const action = (relance.canal || 'whatsapp') as HistoryAction
+      const action = normalizeAction(relance.canal)
       const clientName = relance.factures?.clients?.nom || 'Client inconnu'
       const status = normalizeStatus(relance.statut_envoi)
 
       return {
         id: relance.id,
-        date: relance.created_at || new Date().toISOString(),
+        date: relance.envoyee_at || relance.created_at || '',
         client: clientName,
         action,
         canalLabel: action === 'whatsapp' ? 'WhatsApp' : action === 'email' ? 'Email' : action === 'sms' ? 'SMS' : action === 'tel' ? 'Appel téléphonique' : 'WhatsApp',
@@ -88,7 +84,7 @@ export default function HistoriqueClient({ initialRelances, initialPaiements }: 
 
     const paiementRows: HistoryRow[] = initialPaiements.map((paiement) => ({
       id: paiement.id,
-      date: paiement.date_paiement || paiement.created_at || new Date().toISOString(),
+      date: paiement.date_paiement || paiement.created_at || '',
       client: paiement.factures?.clients?.nom || 'Client inconnu',
       action: 'paiement',
       canalLabel: 'Paiement',
@@ -96,7 +92,7 @@ export default function HistoriqueClient({ initialRelances, initialPaiements }: 
       status: 'Réussi',
     }))
 
-    return [...relanceRows, ...paiementRows].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    return [...relanceRows, ...paiementRows].sort((a, b) => (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0))
   }, [initialPaiements, initialRelances])
 
   const filteredRows = useMemo(() => {
@@ -123,40 +119,6 @@ export default function HistoriqueClient({ initialRelances, initialPaiements }: 
     setEndDate('')
     setStatusFilter('Tous')
   }
-
-  const channelStyles = {
-    whatsapp: {
-      className: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-      icon: MessageCircle,
-      label: 'WhatsApp',
-    },
-    email: {
-      className: 'bg-blue-50 text-blue-700 border border-blue-200',
-      icon: Mail,
-      label: 'Email',
-    },
-    sms: {
-      className: 'bg-slate-100 text-slate-700 border border-slate-200',
-      icon: MessageSquare,
-      label: 'SMS',
-    },
-    tel: {
-      className: 'bg-amber-50 text-amber-700 border border-amber-200',
-      icon: PhoneCall,
-      label: 'Appel',
-    },
-    paiement: {
-      className: 'bg-violet-50 text-violet-700 border border-violet-200',
-      icon: CreditCard,
-      label: 'Paiement',
-    },
-  } as const
-
-  const statusStyles = {
-    Réussi: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-    'En attente': 'bg-amber-50 text-amber-700 border border-amber-200',
-    'Échoué': 'bg-red-50 text-red-700 border border-red-200',
-  } as const
 
   if (!isMounted) {
     return <div className="w-full h-[420px] rounded-xl bg-slate-50 animate-pulse border border-slate-200" />
@@ -188,7 +150,7 @@ export default function HistoriqueClient({ initialRelances, initialPaiements }: 
             </label>
             <select
               value={actionFilter}
-              onChange={(event) => setActionFilter(event.target.value as (typeof actionOptions)[number]['value'])}
+              onChange={(event) => setActionFilter(actionFilterValue(event.target.value))}
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-now-blue focus:outline-none focus:ring-2 focus:ring-now-blue/10"
             >
               {actionOptions.map((option) => (
@@ -229,7 +191,7 @@ export default function HistoriqueClient({ initialRelances, initialPaiements }: 
             </label>
             <select
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as (typeof statusOptions)[number])}
+              onChange={(event) => setStatusFilter(statusFilterValue(event.target.value))}
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-now-blue focus:outline-none focus:ring-2 focus:ring-now-blue/10"
             >
               {statusOptions.map((option) => (
@@ -251,70 +213,7 @@ export default function HistoriqueClient({ initialRelances, initialPaiements }: 
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-now-surface shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50/80">
-              <tr>
-                <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-wider text-now-blue-light border-b border-slate-200">
-                  Date &amp; heure
-                </th>
-                <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-wider text-now-blue-light border-b border-slate-200">
-                  Client
-                </th>
-                <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-wider text-now-blue-light border-b border-slate-200">
-                  Action
-                </th>
-                <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-wider text-now-blue-light border-b border-slate-200">
-                  Détails / message
-                </th>
-                <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-wider text-now-blue-light border-b border-slate-200">
-                  Statut
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRows.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-500">
-                    Aucun historique ne correspond à ces filtres.
-                  </td>
-                </tr>
-              ) : (
-                filteredRows.map((row) => {
-                  const channelMeta = channelStyles[row.action] || channelStyles.whatsapp
-                  const Icon = channelMeta.icon
-
-                  return (
-                    <tr key={row.id} className="border-b border-slate-100 transition-colors hover:bg-slate-50/80">
-                      <td className="px-6 py-4 text-sm font-medium text-slate-700 whitespace-nowrap">
-                        {formatDateTime(row.date)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-semibold text-now-blue">{row.client}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-[11px] font-bold ${channelMeta.className}`}>
-                          <Icon size={12} />
-                          {row.canalLabel}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-600 max-w-xl">
-                        <div className="leading-6">{row.details}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${statusStyles[row.status]}`}>
-                          {row.status}
-                        </span>
-                      </td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <HistoriqueTable rows={filteredRows} />
     </div>
   )
 }

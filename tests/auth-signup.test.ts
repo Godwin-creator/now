@@ -50,7 +50,7 @@ describe('signUp', () => {
     mocks.createServerClient.mockResolvedValue(supabase);
 
     await expect(signUp('gerant@example.com', 'secure123')).resolves.toEqual({
-      success: true,
+      ok: true,
       data: { verificationRequired: true },
     });
 
@@ -63,9 +63,8 @@ describe('signUp', () => {
 
   it('rejects passwords shorter than eight characters before contacting Supabase', async () => {
     await expect(signUp('gerant@example.com', '1234567')).resolves.toEqual({
-      success: false,
-      error:
-        'Saisissez une adresse e-mail valide et un mot de passe d’au moins 8 caractères.',
+      ok: false,
+      error: { code: 'VALIDATION', message: 'Saisissez une adresse e-mail valide et un mot de passe d’au moins 8 caractères.' },
     });
     expect(mocks.createServerClient).not.toHaveBeenCalled();
   });
@@ -85,13 +84,12 @@ describe('signUp', () => {
     const result = await signUp('gerant@example.com', 'secure123');
 
     expect(result).toEqual({
-      success: false,
-      error:
-        'Trop de demandes ont été envoyées. Attendez un peu avant de réessayer.',
+      ok: false,
+      error: { code: 'over_email_send_rate_limit', message: 'Trop de demandes ont été envoyées. Attendez un peu avant de réessayer.' },
     });
-    if (result.success)
+    if (result.ok)
       throw new Error('La limitation de débit aurait dû échouer.');
-    expect(result.error).not.toContain('raw server message');
+    expect(result.error.message).not.toContain('raw server message');
   });
 });
 
@@ -118,11 +116,11 @@ describe('createCompany', () => {
     });
 
     await expect(createCompany('Ma PME')).resolves.toEqual({
-      success: true,
+      ok: true,
       data: null,
     });
     await expect(createCompany('Autre nom')).resolves.toEqual({
-      success: true,
+      ok: true,
       data: null,
     });
 

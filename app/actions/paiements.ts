@@ -1,67 +1,40 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { requireUser } from '@/lib/auth'
+import { failure, type Result } from '@/lib/auth/result'
+import { soldeRestant, statutFacture } from '@/lib/domain'
+import { getPaymentState, insertPayment } from '@/lib/db/paiements'
+import { paymentSchema } from '@/lib/validation/schemas'
 
-export type PaiementResponse = {
-  success: boolean;
-  error?: string;
-}
+export async function enregistrerPaiement(
+  factureId: string,
+  montant: number,
+  date: string,
+): Promise<Result<null>> {
+  const user = await requireUser()
+  const parsed = paymentSchema.safeParse({ factureId, montant, date })
+  if (!parsed.success) return failure('VALIDATION', 'Le paiement doit avoir un montant positif et une date valide.')
 
-export async function marquerCommePayee(factureId: string, montant: number): Promise<PaiementResponse> {
   try {
-    const supabase = await createClient()
+    const state = await getPaymentState(user.id, parsed.data.factureId)
+    if (!state.ok) return state
 
-    // 1. Vérification de la session utilisateur
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return { 
-        success: false, 
-        error: "Session expirée. Veuillez vous reconnecter." 
-      }
+    const status = statutFacture(state.data.montantFacture, state.data.paiements, state.data.annulee)
+    if (status === 'annulee') return failure('INVALID_STATE', 'Une facture annulée ne peut pas recevoir de paiement.')
+    if (status === 'payee') return failure('ALREADY_PAID', 'Cette facture est déjà soldée.')
+
+    const solde = soldeRestant(state.data.montantFacture, state.data.paiements)
+    if (parsed.data.montant > solde) {
+      return failure('PAYMENT_EXCEEDS_BALANCE', 'Le paiement dépasse le solde restant dû.')
     }
-
-    if (!factureId) {
-      return { success: false, error: "Identifiant de facture manquant." }
-    }
-
-    const montantPaye = Math.max(0, Number(montant) || 0)
-
-    // 2. Mettre à jour le statut de la facture à 'payee'
-    const { error: updateError } = await supabase
-      .from('factures')
-      .update({ statut: 'payee' })
-      .eq('id', factureId)
-      .eq('company_id', user.id)
-
-    if (updateError) {
-      console.error("Erreur lors de la mise à jour de la facture :", updateError)
-      return { 
-        success: false, 
-        error: updateError.message || "Impossible de marquer la créance comme payée." 
-      }
-    }
-
-    // 3. Enregistrer l'entrée dans la table paiements
-    const { error: insertPaiementError } = await supabase
-      .from('paiements')
-      .insert({
-        company_id: user.id,
-        facture_id: factureId,
-        montant_paye: montantPaye,
-        date_paiement: new Date().toISOString().slice(0, 10)
-      })
-
-    if (insertPaiementError) {
-      console.error("Erreur lors de l'enregistrement du paiement :", insertPaiementError)
-      // On prévient mais la facture a bien été marquée payée
-    }
+    const inserted = await insertPayment(user.id, parsed.data.factureId, parsed.data.montant, parsed.data.date)
+    if (!inserted.ok) return inserted
 
     revalidatePath('/dashboard')
-    return { success: true }
-  } catch (err: unknown) {
-    console.error("Erreur serveur inattendue dans marquerCommePayee:", err)
-    const message = err instanceof Error ? err.message : "Une erreur inattendue est survenue."
-    return { success: false, error: message }
+    revalidatePath('/dashboard/historique')
+    return inserted
+  } catch {
+    return failure('DATABASE', 'Le paiement n’a pas pu être vérifié ou enregistré.')
   }
 }

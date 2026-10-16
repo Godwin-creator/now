@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
-import DashboardClient from '@/app/components/DashboardClient'
-import { Client, Facture, Relance, Paiement } from '@/types'
+import DashboardClient from '@/app/components/DashboardClientCore'
+import { Facture, Relance, Paiement } from '@/types'
 import { redirect } from 'next/navigation'
 import { enrichirCreances } from '@/lib/domain'
 
@@ -12,19 +12,16 @@ export default async function Dashboard() {
     redirect('/login')
   }
 
-  let clients: Client[] = []
   let factures: Facture[] = []
   let relances: Relance[] = []
   let paiements: Paiement[] = []
 
   try {
-    const [clientsRes, facturesRes, relancesRes, paiementsRes] = await Promise.all([
-      supabase.from('clients').select('*').order('nom', { ascending: true }),
+    const [facturesRes, relancesRes, paiementsRes] = await Promise.all([
       supabase.from('factures').select('*, clients(*), companies(*)').order('date_echeance', { ascending: true }),
       supabase.from('relances').select('*, factures(*, clients(*))').order('created_at', { ascending: false }),
       supabase.from('paiements').select('*, factures(*, clients(*))').order('created_at', { ascending: false })
     ])
-    clients = clientsRes.data || []
     factures = facturesRes.data || []
     relances = relancesRes.data || []
     paiements = paiementsRes.data || []
@@ -55,10 +52,7 @@ export default async function Dashboard() {
       
       <div className="flex-1 overflow-hidden flex flex-col">
         <DashboardClient
-          initialClients={clients}
           initialFactures={facturesEnrichies}
-          initialRelances={relances}
-          initialPaiements={paiements}
         />
       </div>
     </div>

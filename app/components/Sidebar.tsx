@@ -102,7 +102,7 @@ export default function Sidebar() {
         </div>
 
         <div className="pt-6 border-t border-white/20">
-          <form action={signOut}>
+          <form action={async () => { await signOut() }}>
             <button
               type="submit"
               className="flex items-center gap-3 px-4 py-3 w-full text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors text-sm font-semibold tracking-wide"

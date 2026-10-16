@@ -1,8 +1,9 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Eye, MessageCircle, PencilLine, Phone, Search, X } from 'lucide-react'
+import { Eye, MessageCircle, PencilLine, Phone, Search } from 'lucide-react'
 import type { Client } from '@/types'
+import ClientDetailsPanel from './ClientDetailsPanel'
 
 const profileStyles: Record<string, string> = {
   corporate: 'bg-blue-50 text-now-blue border border-blue-100',
@@ -50,7 +51,7 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
     })
   }, [clients, query])
 
-  const handleUpdateClient = (client: Client) => {
+  const handleClientSaved = (client: Client) => {
     setClients((current) => current.map((item) => (item.id === client.id ? client : item)))
     setEditingClient(null)
     setSelectedClient(client)
@@ -155,159 +156,14 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
         </div>
       </div>
 
-      {(selectedClient || editingClient) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-end bg-slate-900/25 backdrop-blur-[1px]">
-          <div className="h-full w-full max-w-lg bg-white shadow-2xl border-l border-slate-200 p-6 overflow-y-auto">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-xl font-black text-now-blue">
-                {editingClient ? 'Modifier le client' : 'Profil du client'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedClient(null)
-                  setEditingClient(null)
-                }}
-                className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-slate-100"
-                aria-label="Fermer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {editingClient ? (
-              <form
-                className="space-y-4"
-                onSubmit={(event) => {
-                  event.preventDefault()
-                  if (editingClient) handleUpdateClient(editingClient)
-                }}
-              >
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-now-blue-light mb-1">Nom</label>
-                  <input
-                    value={editingClient.nom}
-                    onChange={(event) => setEditingClient({ ...editingClient, nom: event.target.value })}
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-now-blue"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-now-blue-light mb-1">Email</label>
-                  <input
-                    value={editingClient.email ?? ''}
-                    onChange={(event) => setEditingClient({ ...editingClient, email: event.target.value })}
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-now-blue"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-now-blue-light mb-1">Téléphone</label>
-                    <input
-                      value={editingClient.telephone ?? ''}
-                      onChange={(event) => setEditingClient({ ...editingClient, telephone: event.target.value })}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-now-blue"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-now-blue-light mb-1">WhatsApp</label>
-                    <input
-                      value={editingClient.whatsapp ?? ''}
-                      onChange={(event) => setEditingClient({ ...editingClient, whatsapp: event.target.value })}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-now-blue"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-now-blue-light mb-1">Profil</label>
-                    <select
-                      value={editingClient.profil}
-                      onChange={(event) => setEditingClient({ ...editingClient, profil: event.target.value as Client['profil'] })}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-now-blue"
-                    >
-                      <option value="particulier informel">Particulier informel</option>
-                      <option value="professionnel">Professionnel</option>
-                      <option value="corporate">Corporate</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-now-blue-light mb-1">Secteur</label>
-                    <input
-                      value={editingClient.secteur ?? ''}
-                      onChange={(event) => setEditingClient({ ...editingClient, secteur: event.target.value })}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-now-blue"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setEditingClient(null)}
-                    className="px-4 py-2 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 text-sm font-bold text-now-blue bg-now-yellow rounded-xl hover:bg-now-yellow-hover"
-                  >
-                    Enregistrer
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="space-y-5 text-sm text-slate-700">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-now-blue-light">Nom</p>
-                  <p className="mt-1 font-semibold text-now-blue">{selectedClient?.nom}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-now-blue-light">Téléphone</p>
-                    <p className="mt-1">{selectedClient?.telephone || 'Non renseigné'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-now-blue-light">WhatsApp</p>
-                    <p className="mt-1">{selectedClient?.whatsapp || 'Non renseigné'}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-now-blue-light">Profil</p>
-                    <p className="mt-1">{formatProfile(selectedClient?.profil)}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-now-blue-light">Secteur</p>
-                    <p className="mt-1">{selectedClient?.secteur || 'Non renseigné'}</p>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-now-blue-light">Email</p>
-                  <p className="mt-1">{selectedClient?.email || 'Non renseigné'}</p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (selectedClient) setEditingClient(selectedClient)
-                  }}
-                  className="w-full mt-4 flex items-center justify-center gap-2 rounded-xl bg-now-yellow px-4 py-3 font-bold text-now-blue hover:bg-now-yellow-hover"
-                >
-                  <PencilLine className="h-4 w-4" />
-                  Modifier le client
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <ClientDetailsPanel
+        selectedClient={selectedClient}
+        editingClient={editingClient}
+        onClose={() => { setSelectedClient(null); setEditingClient(null) }}
+        onStartEditing={setEditingClient}
+        onEditingChange={setEditingClient}
+        onSaved={handleClientSaved}
+      />
     </>
   )
 }
