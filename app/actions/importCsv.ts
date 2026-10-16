@@ -16,33 +16,6 @@ export type ImportCsvResponse = {
   error?: string
 }
 
-// Logique de Scoring conforme au Cahier des charges
-function calculerScoreRisque(
-  joursRetard: number,
-  montant: number,
-  retardsPrecedents: number,
-  profil: string,
-  relation: string
-) {
-  const maxMontant = 5000000
-  const penaliteProfil = (profil === 'particulier informel' || relation === 'difficile') ? 15 : 0
-  const retardsPoints = Math.min((retardsPrecedents || 0) * 10, 30) // Max 30 pts
-
-  let score = (joursRetard / 90) * 40 + (montant / maxMontant) * 30 + retardsPoints + penaliteProfil
-  score = Math.min(Math.max(score, 0), 100) // Plafonner entre 0 et 100
-
-  let niveau: 'Faible' | 'Moyen' | 'Élevé' | 'Critique' = 'Faible'
-  if (score > 85) {
-    niveau = 'Critique'
-  } else if (score > 66) {
-    niveau = 'Élevé'
-  } else if (score > 33) {
-    niveau = 'Moyen'
-  }
-
-  return { score: Math.round(score), niveau }
-}
-
 export async function importerCreances(payload: CreanceImportPayload[]): Promise<ImportCsvResponse> {
   try {
     const supabase = await createClient()
@@ -143,8 +116,6 @@ export async function importerCreances(payload: CreanceImportPayload[]): Promise
 
     // ÉTAPE 3 : Bulk Insert Factures
     const facturesToInsert = []
-    const maintenant = new Date()
-
     for (const row of payload) {
       const nomTrimmed = row.nom.trim().toLowerCase()
       const telClean = (row.telephone || '').replace(/[^0-9]/g, '')
@@ -158,28 +129,15 @@ export async function importerCreances(payload: CreanceImportPayload[]): Promise
       const dateEcheance = new Date(dateService)
       dateEcheance.setDate(dateEcheance.getDate() + 30) // Délai par défaut : 30 jours
 
-      const diffTemps = maintenant.getTime() - dateEcheance.getTime()
-      const joursRetard = Math.max(0, Math.floor(diffTemps / (1000 * 3600 * 24)))
-
-      const { score, niveau } = calculerScoreRisque(
-        joursRetard,
-        row.montant_fcfa,
-        Number(clientObj.retards_precedents) || 0,
-        clientObj.profil || 'professionnel',
-        'regulier'
-      )
-
       facturesToInsert.push({
         company_id: user.id,
         client_id: clientObj.id,
         montant_fcfa: row.montant_fcfa,
-        date_service: dateService.toISOString(),
-        date_echeance: dateEcheance.toISOString(),
+        date_service: dateService.toISOString().slice(0, 10),
+        date_echeance: dateEcheance.toISOString().slice(0, 10),
         delai_paiement_jours: 30,
         type_relation: 'regulier',
         canal_contact: row.telephone ? 'whatsapp' : 'email',
-        score_risque: score,
-        niveau_risque: niveau,
         statut: 'en_attente'
       })
     }

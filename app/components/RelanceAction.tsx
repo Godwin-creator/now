@@ -28,9 +28,29 @@ import { CanalContact, Client } from '@/types'
 
 interface RelanceActionProps {
   factureId: string
-  canal: CanalContact
-  niveauRisque?: string
+  canal: string
   client?: Client
+}
+
+type RelanceClient = {
+  nom?: string
+  whatsapp?: string | null
+  telephone?: string | null
+  email?: string | null
+  profil?: string | null
+}
+
+function normalizeCanal(canal: string): CanalContact {
+  switch (canal) {
+    case 'whatsapp':
+    case 'email':
+    case 'sms':
+    case 'tel':
+    case 'tous':
+      return canal
+    default:
+      return 'tous'
+  }
 }
 
 const CANAUX_CONFIG = [
@@ -48,15 +68,15 @@ const TONS_CONFIG = [
   { id: 'urgent',   label: 'Dernier avis', icon: ShieldAlert },
 ] as const
 
-export default function RelanceAction({ factureId, canal, niveauRisque, client }: RelanceActionProps) {
-  const [selectedCanal, setSelectedCanal] = useState<CanalContact>(canal || 'tous')
+export default function RelanceAction({ factureId, canal, client }: RelanceActionProps) {
+  const [selectedCanal, setSelectedCanal] = useState<CanalContact>(() => normalizeCanal(canal))
   const [selectedTon, setSelectedTon]     = useState<string>('factuel')
   const [showOptions, setShowOptions]     = useState(false)
   const [loading, setLoading]             = useState(false)
   const [result, setResult]               = useState<{
     message: string
     canalUtilise?: string
-    client?: Record<string, string | undefined>
+    client?: RelanceClient
   } | null>(null)
   const [copied, setCopied]               = useState(false)
   const [errorMsg, setErrorMsg]           = useState<string | null>(null)
@@ -104,14 +124,6 @@ export default function RelanceAction({ factureId, canal, niveauRisque, client }
 
   return (
     <div className="w-full flex flex-col gap-3">
-      {/* Alerte risque critique */}
-      {niveauRisque === 'Critique' && (
-        <div className="flex items-center gap-2 p-3 bg-rose-50 text-rose-800 text-xs font-bold border-l-4 border-rose-500 uppercase tracking-wide">
-          <PhoneCall size={14} className="text-rose-600 shrink-0" />
-          Appel téléphonique ou dernier avis recommandé — Score critique
-        </div>
-      )}
-
       {/* Erreur de génération */}
       <AnimatePresence>
         {errorMsg && (

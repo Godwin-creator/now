@@ -46,9 +46,10 @@ export async function marquerCommePayee(factureId: string, montant: number): Pro
     const { error: insertPaiementError } = await supabase
       .from('paiements')
       .insert({
+        company_id: user.id,
         facture_id: factureId,
         montant_paye: montantPaye,
-        date_paiement: new Date().toISOString()
+        date_paiement: new Date().toISOString().slice(0, 10)
       })
 
     if (insertPaiementError) {

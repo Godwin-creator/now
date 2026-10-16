@@ -80,13 +80,6 @@ export default function DashboardClient({
     }
   }
 
-  const riskStyle = (niveau: string) => {
-    if (niveau === 'Critique') return 'bg-red-50 text-red-700 border border-red-200'
-    if (niveau === 'Élevé')   return 'bg-orange-50 text-orange-800 border border-orange-200'
-    if (niveau === 'Moyen')   return 'bg-yellow-50 text-yellow-800 border border-yellow-200'
-    return 'bg-green-50 text-green-700 border border-green-200'
-  }
-
   const activeFactures = useMemo(
     () => initialFactures.filter((facture) => facture.statut !== 'payee'),
     [initialFactures],
@@ -221,10 +214,7 @@ export default function DashboardClient({
                       ) : (
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-1.5">
-                             <span className={`text-xs font-semibold px-2.5 py-1 rounded ${riskStyle(facture.niveau_risque)}`}>
-                               {facture.niveau_risque}
-                             </span>
-                             <span className="text-xs text-gray-400">{facture.score_risque}/100</span>
+                            <span className="text-xs font-medium text-gray-500">Risque calculé en P2</span>
                           </div>
                           {facture.statut === 'en_attente' && (
                             <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700">En attente</span>
@@ -279,8 +269,7 @@ export default function DashboardClient({
                             <RelanceAction
                               factureId={facture.id}
                               canal={facture.canal_contact}
-                              niveauRisque={facture.niveau_risque}
-                              client={facture.clients}
+                              client={facture.clients ?? undefined}
                             />
                           </div>
                         </td>

@@ -43,6 +43,15 @@ navigateur.
 | `npm test` | Lance les tests Vitest |
 | `npm run format` | Formate les fichiers avec Prettier |
 | `npm run check` | Lance typecheck, lint et tests |
+| `npm run db:types` | Génère les types Supabase du projet CLI lié |
+
+## Supabase
+
+Le guide de [configuration Supabase](./docs/SUPABASE.md) décrit la séparation
+dev/prod, les migrations et les réglages Auth. Pour tester les policies RLS avec
+pgTAP en local (Docker requis), lancez `npx supabase start`, puis
+`npx supabase test db`. N'exécutez les migrations distantes que vers `dev`
+après vérification de son project-ref.
 
 ## Documentation
 

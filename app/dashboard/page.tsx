@@ -19,7 +19,7 @@ export default async function Dashboard() {
   try {
     const [clientsRes, facturesRes, relancesRes, paiementsRes] = await Promise.all([
       supabase.from('clients').select('*').order('nom', { ascending: true }),
-      supabase.from('factures').select('*, clients(*), companies(*)').order('score_risque', { ascending: false }),
+      supabase.from('factures').select('*, clients(*), companies(*)').order('date_echeance', { ascending: true }),
       supabase.from('relances').select('*, factures(*, clients(*))').order('created_at', { ascending: false }),
       supabase.from('paiements').select('*, factures(*, clients(*))').order('created_at', { ascending: false })
     ])

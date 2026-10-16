@@ -4,28 +4,6 @@ import { createClient } from '@/utils/supabase/server'
 import { GoogleGenAI } from '@google/genai'
 import { revalidatePath } from 'next/cache'
 
-// Logique de Scoring conforme au Cahier des charges
-// Formule : Score = (Jours retard / 90) × 40 + (Montant / Montant max) × 30 + (Retards précédents × 10) [max 30 pts] + penaliteProfil
-function calculerScoreRisque(joursRetard: number, montant: number, retardsPrecedents: number, profil: string, relation: string) {
-  const maxMontant = 5000000;
-  const penaliteProfil = (profil === 'particulier informel' || relation === 'difficile') ? 15 : 0;
-  
-  const retardsPoints = Math.min((retardsPrecedents || 0) * 10, 30); // Max 30 pts
-  let score = (joursRetard / 90) * 40 + (montant / maxMontant) * 30 + retardsPoints + penaliteProfil;
-  score = Math.min(Math.max(score, 0), 100); // Plafonner strictement entre 0 et 100
-
-  let niveau: 'Faible' | 'Moyen' | 'Élevé' | 'Critique' = 'Faible';
-  if (score > 85) {
-    niveau = 'Critique';
-  } else if (score > 66) {
-    niveau = 'Élevé';
-  } else if (score > 33) {
-    niveau = 'Moyen';
-  }
-
-  return { score: Math.round(score), niveau };
-}
-
 export type ActionResponse = {
   success: boolean;
   error?: string;
@@ -113,52 +91,27 @@ export async function creerCreance(formData: FormData): Promise<ActionResponse> 
     const dateEcheance = new Date(dateService)
     dateEcheance.setDate(dateEcheance.getDate() + delaiPaiement)
 
-    // Calcul des jours de retard réels par rapport à l'échéance
-    const maintenant = new Date()
-    const diffTemps = maintenant.getTime() - dateEcheance.getTime()
-    const joursRetard = Math.max(0, Math.floor(diffTemps / (1000 * 3600 * 24)))
-    
-    // Récupérer les informations complètes du client pour le calcul du score
-    const { data: client, error: fetchClientError } = await supabase
-      .from('clients')
-      .select('*')
-      .eq('id', clientId)
-      .single()
-
-    if (fetchClientError || !client) {
-      return { 
-        success: false, 
-        error: "Client introuvable dans la base de données." 
-      }
-    }
-    
     // Validation stricte des énumérations
     const relationRaw = String(formData.get('type_relation') || 'regulier').trim().toLowerCase()
-    const relationValide = ['regulier', 'nouveau', 'difficile'].includes(relationRaw) ? relationRaw : 'regulier'
+    const relationValide = (['regulier', 'nouveau', 'difficile'] as const).find(
+      (relation) => relation === relationRaw,
+    ) ?? 'regulier'
 
     const canalRaw = String(formData.get('canal_contact') || 'whatsapp').trim().toLowerCase()
-    const canalValide = ['whatsapp', 'email', 'sms', 'tel', 'tous'].includes(canalRaw) ? canalRaw : 'whatsapp'
-
-    const { score, niveau } = calculerScoreRisque(
-      joursRetard, 
-      montant, 
-      Number(client.retards_precedents) || 0, 
-      client.profil || 'professionnel', 
-      relationValide
-    )
+    const canalValide = (['whatsapp', 'email', 'sms', 'tel', 'tous'] as const).find(
+      (canal) => canal === canalRaw,
+    ) ?? 'whatsapp'
 
     // 5. Insertion sécurisée de la facture
-    const insertPayload: Record<string, string | number | null | undefined> = {
+    const insertPayload = {
       company_id: user.id,
       client_id: clientId,
       montant_fcfa: montant,
-      date_service: dateService.toISOString(),
-      date_echeance: dateEcheance.toISOString(),
+      date_service: dateService.toISOString().slice(0, 10),
+      date_echeance: dateEcheance.toISOString().slice(0, 10),
       delai_paiement_jours: delaiPaiement,
       type_relation: relationValide,
       canal_contact: canalValide,
-      score_risque: score,
-      niveau_risque: niveau,
       statut: 'en_attente'
     }
 
@@ -170,12 +123,10 @@ export async function creerCreance(formData: FormData): Promise<ActionResponse> 
         company_id: user.id,
         client_id: clientId,
         montant_fcfa: montant,
-        date_service: dateService.toISOString(),
-        date_echeance: dateEcheance.toISOString(),
+        date_service: dateService.toISOString().slice(0, 10),
+        date_echeance: dateEcheance.toISOString().slice(0, 10),
         type_relation: relationValide,
         canal_contact: canalValide === 'tous' && factureError.message?.includes('factures_canal_contact_check') ? 'whatsapp' : canalValide,
-        score_risque: score,
-        niveau_risque: niveau,
         statut: 'en_attente'
       }
       const fallback = await supabase.from('factures').insert(fallbackPayload)
@@ -321,7 +272,6 @@ Règles strictes de rédaction :
 - Rédige au nom de l'entreprise en utilisant la première personne du pluriel ("Nous").
 - N'utilise ABSOLUMENT AUCUN émoji.
 - Ton appliqué : ${tonRecommande}.
-- Niveau de risque : ${facture.niveau_risque} (Score de risque : ${facture.score_risque}/100).
 - Retard constaté : ${joursRetard} jour(s).
 
 ${instructionsCanal}
@@ -338,6 +288,7 @@ Génère UNIQUEMENT le texte du message ou du script prêt à l'emploi.
 `
 
     let messageGenere = ""
+    let source: 'ia' | 'template' = 'template'
     try {
       const apiKey = process.env.GEMINI_API_KEY
       if (!apiKey || apiKey.startsWith('AQ.') || apiKey.includes('placeholder')) {
@@ -397,6 +348,7 @@ Rappel ${nomEntreprise}: facture de ${montantFormate} echue le ${dateEcheanceStr
           contents: prompt
         })
         messageGenere = response.text || ""
+        if (messageGenere) source = 'ia'
       }
     } catch (error) {
       console.error("Erreur lors de l'appel Gemini API:", error)
@@ -407,10 +359,12 @@ Rappel ${nomEntreprise}: facture de ${montantFormate} echue le ${dateEcheanceStr
     let relanceId = ""
     try {
       const { data: relance } = await supabase.from('relances').insert({
+        company_id: user.id,
         facture_id: factureId,
         canal: canalEffectif,
         message_genere: messageGenere,
-        statut_envoi: 'genere'
+        statut_envoi: 'generee',
+        source,
       }).select().single()
       if (relance) relanceId = relance.id
     } catch (e) {
@@ -423,11 +377,11 @@ Rappel ${nomEntreprise}: facture de ${montantFormate} echue le ${dateEcheanceStr
       relanceId,
       canalUtilise: canalEffectif,
       client: {
-        nom: facture.clients?.nom,
-        whatsapp: facture.clients?.whatsapp,
-        telephone: facture.clients?.telephone,
-        email: facture.clients?.email,
-        profil: facture.clients?.profil
+        nom: facture.clients?.nom ?? undefined,
+        whatsapp: facture.clients?.whatsapp ?? undefined,
+        telephone: facture.clients?.telephone ?? undefined,
+        email: facture.clients?.email ?? undefined,
+        profil: facture.clients?.profil ?? undefined
       }
     }
   } catch (err: unknown) {

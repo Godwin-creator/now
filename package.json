@@ -10,7 +10,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "format": "prettier --write .",
-    "check": "npm run typecheck && npm run lint && npm test"
+    "check": "npm run typecheck && npm run lint && npm test",
+    "db:types": "npx supabase gen types typescript --linked --schema public > types/database.ts"
   },
   "dependencies": {
     "@google/genai": "^2.23.0",
