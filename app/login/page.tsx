@@ -57,6 +57,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     const currentPhrase = TYPEWRITER_PHRASES[phraseIndex]
+    if (!currentPhrase) return
+
     const typeSpeed = isDeleting ? 30 : 65
     const pauseTime = isDeleting ? 400 : 2200
 

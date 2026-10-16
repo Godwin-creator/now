@@ -119,6 +119,21 @@ Gravité : C = critique, H = haute, M = moyenne, B = basse. « Phase » renvoie 
 | MKT-02 | Discours « équipes de recouvrement » / « importez vos dossiers » : hors cible (gérant sur téléphone) | M | P5 |
 | MKT-03 | Marque éclatée : Now / NowPay, trois URLs | M | P5 |
 
+### Mise à jour P0 — 16 octobre 2026
+
+- `next` et `eslint-config-next` sont en version `16.4.2`. Après `npm audit fix`
+  sans `--force`, npm signale encore cinq alertes hautes dans la chaîne
+  `eslint-config-next` → `@next/eslint-plugin-next` → `fast-glob` →
+  `micromatch` → `braces` (versions vulnérables `braces` ≤ `3.0.3`). La
+  correction proposée par npm rétrograderait `eslint-config-next` en `14.2.35` ;
+  cette régression majeure n'a pas été appliquée.
+- La convention d'authentification Next.js 16 est `proxy.ts` (et non
+  `middleware.ts`, déprécié). La session est aussi vérifiée dans le layout du
+  dashboard avec `requireUser()`.
+- Les tokens Tailwind v4 sont définis dans `app/globals.css`; les fichiers de
+  référence, prompts et cahier des charges sont rangés dans `docs/`.
+- Vitest, Prettier, `npm run check` et la CI GitHub Actions sont configurés.
+
 ## 4. Périmètre
 
 ### 4.1 NowPay 1.0 (le seul périmètre du sprint)

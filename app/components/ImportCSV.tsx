@@ -56,8 +56,11 @@ export default function ImportCSV({ onImportSuccess }: ImportCSVProps) {
             let dateService = new Date(dateStr)
             if (isNaN(dateService.getTime())) {
               const parts = dateStr.split(/[\/\-\.]/)
-              if (parts.length === 3 && parts[2].length === 4) {
-                 dateService = new Date(`${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`)
+              const [day, month, year] = parts
+              if (day && month && year?.length === 4) {
+                dateService = new Date(
+                  `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`,
+                )
               }
             }
             if (isNaN(dateService.getTime())) {
@@ -68,7 +71,7 @@ export default function ImportCSV({ onImportSuccess }: ImportCSVProps) {
               nom,
               telephone,
               montant_fcfa: montant,
-              date_service: dateService.toISOString().split('T')[0]
+              date_service: dateService.toISOString().slice(0, 10),
             })
           }
 

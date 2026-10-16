@@ -1,7 +1,10 @@
+import { requireUser } from '@/lib/auth'
 import Sidebar from '@/app/components/Sidebar'
 import { ReactNode } from 'react'
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
+export default async function DashboardLayout({ children }: { children: ReactNode }) {
+  await requireUser()
+
   return (
     <div className="flex flex-col md:flex-row h-screen w-full bg-now-bg p-4 gap-6">
       <Sidebar />
