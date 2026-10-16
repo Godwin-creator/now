@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { addDays, isValidIsoDate } from '@/lib/domain'
 
 export type CreanceImportPayload = {
   nom: string
@@ -35,11 +36,14 @@ export async function importerCreances(payload: CreanceImportPayload[]): Promise
         error: "Le tableau de données est vide."
       }
     }
+    if (payload.some((row) => !isValidIsoDate(row.date_service))) {
+      return { success: false, error: 'Une ou plusieurs dates de service sont invalides.' }
+    }
 
     // ÉTAPE 1 : Lecture & Indexation
     const { data: clientsExistants, error: clientsError } = await supabase
       .from('clients')
-      .select('id, nom, telephone, retards_precedents, profil')
+      .select('id, nom, telephone, profil')
       .eq('company_id', user.id)
 
     if (clientsError) {
@@ -50,7 +54,6 @@ export async function importerCreances(payload: CreanceImportPayload[]): Promise
       id: string
       nom: string
       telephone: string | null
-      retards_precedents: number | null
       profil: string | null
     }
 
@@ -85,8 +88,7 @@ export async function importerCreances(payload: CreanceImportPayload[]): Promise
              telephone: row.telephone ? row.telephone.trim() : null,
              whatsapp: row.telephone ? row.telephone.trim() : null,
              profil: 'professionnel',
-             secteur: 'Services',
-             retards_precedents: 0
+             secteur: 'Services'
            })
            processedNewClientKeys.add(key)
         }
@@ -98,7 +100,7 @@ export async function importerCreances(payload: CreanceImportPayload[]): Promise
       const { data: insertedClients, error: insertError } = await supabase
         .from('clients')
         .insert(newClientsToInsert)
-        .select('id, nom, telephone, retards_precedents, profil')
+        .select('id, nom, telephone, profil')
       
       if (insertError) {
         return { success: false, error: "Erreur lors de l'insertion en lot des nouveaux clients." }
@@ -125,16 +127,14 @@ export async function importerCreances(payload: CreanceImportPayload[]): Promise
 
       if (!clientObj || !clientObj.id) continue // Sécurité
 
-      const dateService = new Date(row.date_service)
-      const dateEcheance = new Date(dateService)
-      dateEcheance.setDate(dateEcheance.getDate() + 30) // Délai par défaut : 30 jours
+      const dateEcheance = addDays(row.date_service, 30)
 
       facturesToInsert.push({
         company_id: user.id,
         client_id: clientObj.id,
         montant_fcfa: row.montant_fcfa,
-        date_service: dateService.toISOString().slice(0, 10),
-        date_echeance: dateEcheance.toISOString().slice(0, 10),
+        date_service: row.date_service,
+        date_echeance: dateEcheance,
         delai_paiement_jours: 30,
         type_relation: 'regulier',
         canal_contact: row.telephone ? 'whatsapp' : 'email',

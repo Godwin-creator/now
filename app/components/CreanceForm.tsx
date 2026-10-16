@@ -420,10 +420,6 @@ export default function CreanceForm({ clientsExistants }: { clientsExistants: Cl
                     <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
-                <div>
-                  <label className={labelClass}>Retards précédents</label>
-                  <input name="retards_precedents" type="number" min="0" defaultValue="0" className={inputClass} />
-                </div>
               </div>
             </motion.div>
           )}

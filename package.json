@@ -9,8 +9,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "format": "prettier --write .",
-    "check": "npm run typecheck && npm run lint && npm test",
+    "check": "npm run typecheck && npm run lint && npm run test:coverage",
     "db:types": "npx supabase gen types typescript --linked --schema public > types/database.ts"
   },
   "dependencies": {
@@ -31,6 +32,7 @@
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.12",
     "eslint": "^9",
     "eslint-config-next": "^16.4.2",
     "prettier": "^3.9.10",

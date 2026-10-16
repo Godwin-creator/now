@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import DashboardClient from '@/app/components/DashboardClient'
 import { Client, Facture, Relance, Paiement } from '@/types'
 import { redirect } from 'next/navigation'
+import { enrichirCreances } from '@/lib/domain'
 
 export default async function Dashboard() {
   const supabase = await createClient()
@@ -31,6 +32,18 @@ export default async function Dashboard() {
     console.error("Erreur chargement données:", error)
   }
 
+  const today = new Date().toISOString().slice(0, 10)
+  const seuilMontantEleve = factures[0]?.companies?.seuil_montant_eleve ?? 200_000
+  const facturesEnrichies = enrichirCreances(
+    factures.map((facture) => ({
+      ...facture,
+      paiements: paiements.filter((paiement) => paiement.facture_id === facture.id),
+      relances: relances.filter((relance) => relance.facture_id === facture.id),
+    })),
+    today,
+    seuilMontantEleve,
+  )
+
   return (
     <div className="w-full flex flex-col h-full">
       <div className="flex justify-between items-end mb-8 shrink-0">
@@ -43,7 +56,7 @@ export default async function Dashboard() {
       <div className="flex-1 overflow-hidden flex flex-col">
         <DashboardClient
           initialClients={clients}
-          initialFactures={factures}
+          initialFactures={facturesEnrichies}
           initialRelances={relances}
           initialPaiements={paiements}
         />

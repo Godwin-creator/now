@@ -24,12 +24,12 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react'
-import { CanalContact, Client } from '@/types'
+import { CanalContact } from '@/types'
 
 interface RelanceActionProps {
   factureId: string
   canal: string
-  client?: Client
+  client?: RelanceClient
 }
 
 type RelanceClient = {

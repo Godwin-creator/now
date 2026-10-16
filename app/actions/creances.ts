@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { GoogleGenAI } from '@google/genai'
 import { revalidatePath } from 'next/cache'
+import { addDays, canalEffectif, daysBetween, formatFcfa, isValidIsoDate, parseFcfa } from '@/lib/domain'
 
 export type ActionResponse = {
   success: boolean;
@@ -26,10 +27,6 @@ export async function creerCreance(formData: FormData): Promise<ActionResponse> 
     const isNewClient = formData.get('isNewClient') === 'true'
     let clientId = formData.get('client_id') as string
 
-    // Conversion sécurisée des valeurs numériques
-    const retardsRaw = formData.get('retards_precedents')
-    const retardsInput = Math.max(0, Number(retardsRaw) || 0)
-
     // 2. Création du client si nouveau client
     if (isNewClient) {
       const nomClient = String(formData.get('nom_client') || '').trim()
@@ -46,8 +43,7 @@ export async function creerCreance(formData: FormData): Promise<ActionResponse> 
         email: formData.get('email') ? String(formData.get('email')).trim() : null,
         whatsapp: formData.get('whatsapp') ? String(formData.get('whatsapp')).trim() : null,
         profil: profilValide,
-        secteur: String(formData.get('secteur') || 'Services'),
-        retards_precedents: retardsInput
+        secteur: String(formData.get('secteur') || 'Services')
       }).select().single()
 
       if (clientError || !newClient) {
@@ -65,31 +61,28 @@ export async function creerCreance(formData: FormData): Promise<ActionResponse> 
 
     // 3. Extraction et validation du montant (support montant_fcfa ou montant avec espaces/séparateurs)
     const montantRaw = formData.get('montant_fcfa') || formData.get('montant')
-    const montantClean = String(montantRaw || '').replace(/[^0-9]/g, '')
-    const montant = Math.max(0, Number(montantClean) || 0)
-    if (montant <= 0) {
+    const montant = parseFcfa(String(montantRaw ?? ''))
+    if (montant === null || montant <= 0) {
       return { success: false, error: "Le montant de la créance doit être supérieur à 0 FCFA." }
     }
 
     // 4. Calculs des dates pour la facture
-    const dateServiceStr = formData.get('date_service') as string
-    if (!dateServiceStr) {
-      return { success: false, error: "La date du service rendu est obligatoire." }
-    }
-    const dateService = new Date(dateServiceStr)
-    if (isNaN(dateService.getTime())) {
+    const dateServiceStr = String(formData.get('date_service') ?? '')
+    if (!isValidIsoDate(dateServiceStr)) {
       return { success: false, error: "La date du service rendu est invalide." }
     }
     
     // Délai de paiement personnalisé dynamique (0, 15, 30, 45, 60 jours...)
     const delaiPaiementRaw = formData.get('delai_paiement_jours')
-    const delaiPaiement = (delaiPaiementRaw !== null && delaiPaiementRaw !== '')
-      ? Math.max(0, Number(delaiPaiementRaw))
+    const delaiPaiement = delaiPaiementRaw !== null && delaiPaiementRaw !== ''
+      ? Number(delaiPaiementRaw)
       : 30
+    if (!Number.isSafeInteger(delaiPaiement) || delaiPaiement < 0) {
+      return { success: false, error: 'Le délai de paiement est invalide.' }
+    }
 
     // Date d'échéance = Date service + délai accordé
-    const dateEcheance = new Date(dateService)
-    dateEcheance.setDate(dateEcheance.getDate() + delaiPaiement)
+    const dateEcheance = addDays(dateServiceStr, delaiPaiement)
 
     // Validation stricte des énumérations
     const relationRaw = String(formData.get('type_relation') || 'regulier').trim().toLowerCase()
@@ -107,8 +100,8 @@ export async function creerCreance(formData: FormData): Promise<ActionResponse> 
       company_id: user.id,
       client_id: clientId,
       montant_fcfa: montant,
-      date_service: dateService.toISOString().slice(0, 10),
-      date_echeance: dateEcheance.toISOString().slice(0, 10),
+      date_service: dateServiceStr,
+      date_echeance: dateEcheance,
       delai_paiement_jours: delaiPaiement,
       type_relation: relationValide,
       canal_contact: canalValide,
@@ -123,8 +116,8 @@ export async function creerCreance(formData: FormData): Promise<ActionResponse> 
         company_id: user.id,
         client_id: clientId,
         montant_fcfa: montant,
-        date_service: dateService.toISOString().slice(0, 10),
-        date_echeance: dateEcheance.toISOString().slice(0, 10),
+        date_service: dateServiceStr,
+        date_echeance: dateEcheance,
         type_relation: relationValide,
         canal_contact: canalValide === 'tous' && factureError.message?.includes('factures_canal_contact_check') ? 'whatsapp' : canalValide,
         statut: 'en_attente'
@@ -191,17 +184,22 @@ export async function genererMessageIA(
     }
 
     // Déterminer le canal effectif
-    const canalEffectif = canalChoisi || facture.canal_contact || 'whatsapp'
-
-    const dateEcheance = new Date(facture.date_echeance)
-    const maintenant = new Date()
-    const diffMs = maintenant.getTime() - dateEcheance.getTime()
-    const joursRetard = Math.max(0, Math.floor(diffMs / (1000 * 3600 * 24)))
+    const canal = canalEffectif(canalChoisi || facture.canal_contact || 'whatsapp', {
+      whatsapp: facture.clients?.whatsapp,
+      telephone: facture.clients?.telephone,
+      email: facture.clients?.email,
+    })
+    if (!canal.canal) {
+      return { success: false, error: 'Aucune coordonnée disponible pour contacter ce client.' }
+    }
+    const canalUtilise = canal.canal
+    const today = new Date().toISOString().slice(0, 10)
+    const joursRetard = Math.max(0, daysBetween(facture.date_echeance, today))
 
     const nomEntreprise = facture.companies?.nom || 'Notre entreprise'
     const nomClient = facture.clients?.nom || 'Cher client'
-    const montantFormate = `${Number(facture.montant_fcfa).toLocaleString('fr-FR')} FCFA`
-    const dateEcheanceStr = dateEcheance.toLocaleDateString('fr-FR')
+    const montantFormate = formatFcfa(Number(facture.montant_fcfa))
+    const dateEcheanceStr = new Date(`${facture.date_echeance}T00:00:00Z`).toLocaleDateString('fr-FR', { timeZone: 'UTC' })
 
     // Ton de la relance selon le profil client et la relation ou le choix explicite
     let tonRecommande = 'Direct, courtois et professionnel'
@@ -220,12 +218,12 @@ export async function genererMessageIA(
     }
 
     // Instructions spécifiques selon le canal
-    let instructionsCanal = ""
-    if (canalEffectif === 'sms') {
+    let instructionsCanal = ''
+    if (canalUtilise === 'sms') {
       instructionsCanal = `
 - Canal : SMS (contrainte absolue : moins de 160 caractères).
 - Rédige un message SMS percutant et ultra-concis mentionnant le montant (${montantFormate}) et le nom de l'entreprise.`
-    } else if (canalEffectif === 'email') {
+    } else if (canalUtilise === 'email') {
       instructionsCanal = `
 - Canal : EMAIL.
 - Rédige un email complet et soigné avec :
@@ -234,34 +232,14 @@ export async function genererMessageIA(
   3. Corps du message rappelant la facture (${montantFormate}), l'échéance (${dateEcheanceStr}) et la date de service
   4. Proposition de modalités ou invitation à échanger en cas de difficulté
   5. Formule de politesse professionnelle et signature "${nomEntreprise}".`
-    } else if (canalEffectif === 'whatsapp') {
+    } else if (canalUtilise === 'tel') {
+      instructionsCanal = `
+- Canal : SCRIPT D'APPEL TÉLÉPHONIQUE.
+- Rédige un guide conversationnel structuré en quatre étapes : ouverture, rappel du dossier, écoute et engagement, clôture.`
+    } else {
       instructionsCanal = `
 - Canal : WHATSAPP.
-- Rédige un message WhatsApp lisible, direct, bien espacé, sans lourdeurs, prêt à l'envoi direct.`
-    } else if (canalEffectif === 'tel') {
-      instructionsCanal = `
-- Canal : SCRIPT D'APPEL TÉLÉPHONIQUE (guide d'entretien pour le chargé de recouvrement).
-- Rédige un script d'appel structuré sous forme de guide conversationnel en 4 étapes :
-  1. [Ouverture] : Salutation et identification professionnelle.
-  2. [Rappel] : Rappel du montant (${montantFormate}) et échéance échue (${dateEcheanceStr}).
-  3. [Écoute / Négociation] : Questions pour identifier la raison du retard et proposer un règlement ou un échéancier.
-  4. [Clôture] : Fixation d'une date d'engagement ferme et remerciement.`
-    } else {
-      // canalEffectif === 'tous'
-      instructionsCanal = `
-- Canal : MULTI-CANAL (PACK DE RELANCE COMPLET).
-- Génère 4 versions adaptées et clairement identifiées par des en-têtes :
-  === [1. WHATSAPP] ===
-  (Message direct et fluide)
-
-  === [2. EMAIL] ===
-  (Objet + corps structuré + formule de politesse)
-
-  === [3. SMS (<160 car.)] ===
-  (Message ultra-court)
-
-  === [4. SCRIPT D'APPEL TÉLÉPHONIQUE] ===
-  (Guide pas-à-pas pour l'appel)`
+- Rédige un message lisible, direct et prêt à l'envoi.`
     }
 
     // Prompt Engineering strict selon les règles du cahier des charges
@@ -293,7 +271,7 @@ Génère UNIQUEMENT le texte du message ou du script prêt à l'emploi.
       const apiKey = process.env.GEMINI_API_KEY
       if (!apiKey || apiKey.startsWith('AQ.') || apiKey.includes('placeholder')) {
         // Fallbacks professionnels adaptés par canal si la clé Gemini n'est pas configurée
-        if (canalEffectif === 'email') {
+        if (canalUtilise === 'email') {
           messageGenere = `Objet : Relance — Règlement de facture d'un montant de ${montantFormate}
 
 Madame, Monsieur,
@@ -306,9 +284,9 @@ Nous restons à votre entière disposition pour tout renseignement complémentai
 
 Cordialement,
 ${nomEntreprise}`
-        } else if (canalEffectif === 'sms') {
+        } else if (canalUtilise === 'sms') {
           messageGenere = `Rappel ${nomEntreprise}: votre facture de ${montantFormate} echue le ${dateEcheanceStr} est en attente. Merci de proceder au reglement.`
-        } else if (canalEffectif === 'tel') {
+        } else if (canalUtilise === 'tel') {
           messageGenere = `[SCRIPT D'APPEL TÉLÉPHONIQUE]
 1. OUVERTURE :
 "Bonjour ${nomClient}, je suis le responsable comptabilité de l'entreprise ${nomEntreprise}. Avez-vous deux minutes à m'accorder ?"
@@ -321,22 +299,6 @@ ${nomEntreprise}`
 
 4. CLÔTURE :
 "Parfait, je note donc votre engagement de règlement pour le [date convenue]. Merci pour votre collaboration et excellente journée."`
-        } else if (canalEffectif === 'tous') {
-          messageGenere = `=== [1. WHATSAPP] ===
-Bonjour ${nomClient}, nous vous contactons concernant votre facture de ${montantFormate} échue le ${dateEcheanceStr}. Merci de bien vouloir nous confirmer la date de votre règlement. Cordialement, ${nomEntreprise}.
-
-=== [2. EMAIL] ===
-Objet : Relance — Règlement facture ${montantFormate}
-
-Madame, Monsieur,
-Nous vous rappelons que la facture de ${montantFormate} échue le ${dateEcheanceStr} reste impayée. Merci de régulariser la situation dans les meilleurs délais.
-Cordialement, ${nomEntreprise}
-
-=== [3. SMS] ===
-Rappel ${nomEntreprise}: facture de ${montantFormate} echue le ${dateEcheanceStr} en attente. Merci de proceder au reglement.
-
-=== [4. SCRIPT D'APPEL] ===
-"Bonjour ${nomClient}, ${nomEntreprise} au téléphone. Je vous appelle au sujet de la facture de ${montantFormate} échue le ${dateEcheanceStr} pour convenir d'une date de règlement."`
         } else {
           // WhatsApp par défaut
           messageGenere = `Bonjour ${nomClient}, nous vous contactons concernant la facture de ${montantFormate} échue le ${dateEcheanceStr}. Sauf erreur de notre part, le règlement n'a pas encore été reçu. Merci de bien vouloir faire le nécessaire dans les plus brefs délais. Cordialement, ${nomEntreprise}.`
@@ -361,7 +323,7 @@ Rappel ${nomEntreprise}: facture de ${montantFormate} echue le ${dateEcheanceStr
       const { data: relance } = await supabase.from('relances').insert({
         company_id: user.id,
         facture_id: factureId,
-        canal: canalEffectif,
+        canal: canalUtilise,
         message_genere: messageGenere,
         statut_envoi: 'generee',
         source,
@@ -375,7 +337,7 @@ Rappel ${nomEntreprise}: facture de ${montantFormate} echue le ${dateEcheanceStr
       success: true, 
       message: messageGenere, 
       relanceId,
-      canalUtilise: canalEffectif,
+      canalUtilise,
       client: {
         nom: facture.clients?.nom ?? undefined,
         whatsapp: facture.clients?.whatsapp ?? undefined,

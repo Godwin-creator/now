@@ -81,7 +81,6 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
                   <th className="px-4 pb-4 pt-4 text-xs text-now-blue-light uppercase tracking-wider font-semibold border-b border-slate-200">Contact</th>
                   <th className="px-4 pb-4 pt-4 text-xs text-now-blue-light uppercase tracking-wider font-semibold border-b border-slate-200">Profil</th>
                   <th className="px-4 pb-4 pt-4 text-xs text-now-blue-light uppercase tracking-wider font-semibold border-b border-slate-200">Secteur</th>
-                  <th className="px-4 pb-4 pt-4 text-xs text-now-blue-light uppercase tracking-wider font-semibold border-b border-slate-200 text-right">Retards précédents</th>
                   <th className="px-4 pb-4 pt-4 text-xs text-now-blue-light uppercase tracking-wider font-semibold border-b border-slate-200 text-right">Actions</th>
                 </tr>
               </thead>
@@ -89,8 +88,6 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
               <tbody>
                 {filteredClients.map((client) => {
                   const profileClass = profileStyles[client.profil] || 'bg-slate-100 text-slate-700 border border-slate-200'
-                  const hasDelay = (client.retards_precedents ?? 0) > 0
-
                   return (
                     <tr key={client.id} className="group hover:bg-slate-50 transition-colors border-b border-gray-100">
                       <td className="px-4 py-4 align-top">
@@ -126,12 +123,6 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
 
                       <td className="px-4 py-4 align-top text-sm text-slate-600">
                         {client.secteur || 'Non renseigné'}
-                      </td>
-
-                      <td className="px-4 py-4 align-top text-right">
-                        <span className={`inline-flex items-center justify-end min-w-[2.5rem] text-sm font-semibold ${hasDelay ? 'text-red-600' : 'text-slate-700'}`}>
-                          {client.retards_precedents ?? 0}
-                        </span>
                       </td>
 
                       <td className="px-4 py-4 align-top text-right">
@@ -252,17 +243,6 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-now-blue-light mb-1">Retards précédents</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={editingClient.retards_precedents ?? 0}
-                    onChange={(event) => setEditingClient({ ...editingClient, retards_precedents: Number(event.target.value) || 0 })}
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-now-blue"
-                  />
-                </div>
-
                 <div className="flex justify-end gap-3 pt-4">
                   <button
                     type="button"
@@ -311,13 +291,6 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-now-blue-light">Email</p>
                   <p className="mt-1">{selectedClient?.email || 'Non renseigné'}</p>
-                </div>
-
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-now-blue-light">Retards précédents</p>
-                  <p className={`mt-1 font-bold ${selectedClient && selectedClient.retards_precedents > 0 ? 'text-red-600' : 'text-slate-700'}`}>
-                    {selectedClient?.retards_precedents ?? 0}
-                  </p>
                 </div>
 
                 <button

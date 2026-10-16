@@ -7,18 +7,18 @@ import {
   Search,
   CheckCircle,
   AlertCircle,
-  Globe,
   Mail,
   MessageCircle,
   MessageSquare,
   PhoneCall,
 } from 'lucide-react'
-import { Client, Facture, Relance, Paiement } from '@/types'
+import { Client, Relance, Paiement } from '@/types'
 import RelanceAction from './RelanceAction'
+import { formatFcfa, type CreanceEnrichie } from '@/lib/domain'
 
 interface DashboardClientProps {
   initialClients: Client[]
-  initialFactures: Facture[]
+  initialFactures: CreanceEnrichie[]
   initialRelances: Relance[]
   initialPaiements: Paiement[]
 }
@@ -39,38 +39,29 @@ export default function DashboardClient({
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
   const [expandedRow, setExpandedRow] = useState<string | null>(null)
 
-  const getJoursRetard = (dateEcheance: string) => {
-    const diff = new Date().getTime() - new Date(dateEcheance).getTime()
-    return Math.max(0, Math.floor(diff / (1000 * 3600 * 24)))
-  }
-
   const facturesFiltrees = useMemo(() => {
     return initialFactures.filter((f) => {
       const nom = f.clients?.nom || ''
       if (!nom.toLowerCase().includes(searchTerm.toLowerCase())) return false
-      if (filterStatut !== 'Tous' && f.statut !== filterStatut) return false
+      if (filterStatut !== 'Tous' && f.statut_calcule !== filterStatut) return false
       return true
     })
   }, [initialFactures, searchTerm, filterStatut])
 
-  const formatMontant = (montant: number) => {
-    return montant.toLocaleString('fr-FR', { useGrouping: true, minimumFractionDigits: 0 })
-  }
-
-  const handleMarquerPayee = async (facture: Facture) => {
+  const handleMarquerPayee = async (facture: CreanceEnrichie) => {
     if (payingId) return
     const nomClient = facture.clients?.nom || 'ce client'
-    const montantFormate = formatMontant(Number(facture.montant_fcfa))
-    if (!window.confirm(`Confirmer le règlement de ${montantFormate} FCFA pour ${nomClient} ?`)) return
+    const montantFormate = formatFcfa(facture.solde_restant)
+    if (!window.confirm(`Confirmer le règlement de ${montantFormate} pour ${nomClient} ?`)) return
 
     setPayingId(facture.id)
     setToastMessage(null)
     try {
-      const res = await marquerCommePayee(facture.id, Number(facture.montant_fcfa) || 0)
+      const res = await marquerCommePayee(facture.id, facture.solde_restant)
       if (!res.success) {
         setToastMessage({ text: res.error || 'Erreur lors du règlement.', type: 'error' })
       } else {
-        setToastMessage({ text: `Règlement de ${nomClient} (${montantFormate} FCFA) archivé !`, type: 'success' })
+        setToastMessage({ text: `Règlement de ${nomClient} (${montantFormate}) archivé !`, type: 'success' })
         setTimeout(() => setToastMessage(null), 5000)
       }
     } catch {
@@ -81,22 +72,22 @@ export default function DashboardClient({
   }
 
   const activeFactures = useMemo(
-    () => initialFactures.filter((facture) => facture.statut !== 'payee'),
+    () => initialFactures.filter((facture) => facture.statut_calcule !== 'payee' && facture.statut_calcule !== 'annulee'),
     [initialFactures],
   )
 
   const totalMontantDu = useMemo(
-    () => activeFactures.reduce((sum, facture) => sum + Number(facture.montant_fcfa || 0), 0),
+    () => activeFactures.reduce((sum, facture) => sum + facture.solde_restant, 0),
     [activeFactures],
   )
 
   const facturesEnRetard = useMemo(
-    () => activeFactures.filter((facture) => new Date(facture.date_echeance) < new Date()).length,
+    () => activeFactures.filter((facture) => facture.jours_retard > 0).length,
     [activeFactures],
   )
 
   const aRelancerAujourdHui = useMemo(
-    () => activeFactures.filter((facture) => facture.statut === 'en_attente').length,
+    () => activeFactures.filter((facture) => facture.recommandation.aRelancerAujourdhui).length,
     [activeFactures],
   )
 
@@ -129,7 +120,7 @@ export default function DashboardClient({
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 border-l-4 border-now-yellow">
           <p className="text-xs font-semibold text-now-blue-light uppercase tracking-wider mb-2">Montant dû total</p>
-          <p className="text-2xl font-extrabold text-now-blue">{formatMontant(totalMontantDu)} FCFA</p>
+          <p className="text-2xl font-extrabold text-now-blue">{formatFcfa(totalMontantDu)}</p>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 border-l-4 border-now-yellow">
@@ -186,8 +177,8 @@ export default function DashboardClient({
           </thead>
           <tbody className="divide-y divide-gray-100">
             {facturesFiltrees.map((facture) => {
-              const estPayee = facture.statut === 'payee'
-              const joursRetard = getJoursRetard(facture.date_echeance)
+              const estPayee = facture.statut_calcule === 'payee'
+              const joursRetard = facture.jours_retard
               const isExpanded = expandedRow === facture.id
               
               return (
@@ -198,7 +189,7 @@ export default function DashboardClient({
                       <p className="text-xs text-gray-500 mt-0.5">{facture.clients?.telephone || 'Sans numéro'}</p>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <p className="font-semibold text-gray-900 tabular-nums">{formatMontant(Number(facture.montant_fcfa))}</p>
+                      <p className="font-semibold text-gray-900 tabular-nums">{formatFcfa(facture.solde_restant)}</p>
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm text-gray-700">{new Date(facture.date_echeance).toLocaleDateString('fr-FR')}</p>
@@ -211,28 +202,25 @@ export default function DashboardClient({
                     <td className="px-6 py-4">
                       {estPayee ? (
                         <span className="text-xs font-semibold px-2.5 py-1 rounded bg-green-100 text-green-700">Soldée</span>
+                      ) : facture.statut_calcule === 'annulee' ? (
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded bg-gray-100 text-gray-600">Annulée</span>
                       ) : (
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-medium text-gray-500">Risque calculé en P2</span>
+                            <span className="text-xs font-semibold text-gray-700">{facture.niveau} · {facture.score}/100</span>
                           </div>
-                          {facture.statut === 'en_attente' && (
-                            <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700">En attente</span>
-                          )}
-                          {facture.statut === 'annulee' && (
-                            <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600">Annulée</span>
-                          )}
+                          <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700">{facture.statut_calcule === 'partielle' ? 'Partielle' : 'En attente'}</span>
                         </div>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       <span className="flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-gray-100 px-2.5 py-1 rounded w-fit">
-                        {facture.canal_contact === 'whatsapp' && <MessageCircle size={14} className="text-green-500" />}
-                        {facture.canal_contact === 'email' && <Mail size={14} className="text-blue-500" />}
-                        {facture.canal_contact === 'sms' && <MessageSquare size={14} className="text-purple-500" />}
-                        {facture.canal_contact === 'tel' && <PhoneCall size={14} className="text-orange-500" />}
-                        {facture.canal_contact === 'tous' && <Globe size={14} className="text-blue-500" />}
-                        <span className="capitalize">{facture.canal_contact}</span>
+                        {facture.canal_effectif === 'whatsapp' && <MessageCircle size={14} className="text-green-500" />}
+                        {facture.canal_effectif === 'email' && <Mail size={14} className="text-blue-500" />}
+                        {facture.canal_effectif === 'sms' && <MessageSquare size={14} className="text-purple-500" />}
+                        {facture.canal_effectif === 'tel' && <PhoneCall size={14} className="text-orange-500" />}
+                        {facture.canal_effectif === null && <AlertCircle size={14} className="text-red-500" />}
+                        <span className="capitalize">{facture.canal_effectif ?? 'Coordonnée manquante'}</span>
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -268,7 +256,7 @@ export default function DashboardClient({
                           <div className="p-6">
                             <RelanceAction
                               factureId={facture.id}
-                              canal={facture.canal_contact}
+                              canal={facture.canal_effectif ?? 'tous'}
                               client={facture.clients ?? undefined}
                             />
                           </div>
