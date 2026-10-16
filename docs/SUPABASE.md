@@ -47,11 +47,36 @@ Dans **Authentication → URL Configuration** :
   `https://www.nowpay.website/**` et l'URL de preview exacte attribuée au
   projet Vercel de développement (`https://<preview-host>/**`). N'autorisez
   pas de domaines de preview génériques en production.
+- Définir `SITE_URL` dans l'environnement de l'application sur l'origine
+  correspondante (`http://localhost:3000`, domaine canonique ou preview).
+  `/auth/callback` est réservé à l'échange de code OAuth (par exemple Google) ;
+  l'inscription e-mail utilise un code à 8 chiffres et ne dépend pas de cette
+  route.
 
 Dans **Authentication → Providers → Email** :
 
 - Activer la confirmation de l'adresse e-mail.
 - Exiger un mot de passe d'au moins 8 caractères.
+
+Dans **Authentication → Email Templates → Confirm signup**, remplacer le
+contenu avec lien par un code visible, par exemple :
+
+```html
+<h2>Confirmez votre adresse e-mail</h2>
+<p>Votre code de confirmation NowPay est :</p>
+<p><strong>{{ .Token }}</strong></p>
+```
+
+Supprimer les liens utilisant `{{ .ConfirmationURL }}` ou
+`{{ .TokenHash }}` de ce gabarit : l'utilisateur saisit le code dans
+`/signup/verify`, vérifié par `auth.verifyOtp({ type: 'signup' })`. L'écran
+permet de renvoyer le code avec un délai d'attente de 60 secondes.
+
+L'action `signUp` ne crée aucune ligne dans `companies`. Après authentification,
+les utilisateurs sans entreprise sont dirigés vers `/onboarding`. L'action
+`createCompany` dérive l'identifiant de `getUser()` et fait un upsert idempotent
+sur cet identifiant. La policy `companies_insert_own` reste stricte ; aucun
+accès `service_role` n'est utilisé pour l'inscription ou l'onboarding.
 
 Dans **Project Settings → Authentication → SMTP Settings**, saisir les valeurs
 fournies par votre prestataire SMTP :

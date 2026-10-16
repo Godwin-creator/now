@@ -1,75 +1,152 @@
-'use server'
+'use server';
 
-import { createClient } from '@/utils/supabase/server'
-import { redirect } from 'next/navigation'
+import { redirect } from 'next/navigation';
+import { requireUser } from '@/lib/auth';
+import { getAuthErrorMessage, type Result } from '@/lib/auth/result';
+import {
+  companyNameSchema,
+  signUpSchema,
+  signupCodeSchema,
+} from '@/lib/auth/validation';
+import { createClient } from '@/utils/supabase/server';
 
-export async function signUpWithCompany(formData: FormData) {
-  const email = String(formData.get('email') ?? '').trim()
-  const password = String(formData.get('password') ?? '')
-  const nomEntreprise = String(formData.get('nomEntreprise') ?? '').trim()
+type SignUpResult = { verificationRequired: boolean };
 
-  if (!email || !password || !nomEntreprise) {
-    return { success: false, error: 'Email, mot de passe et nom de l’entreprise sont obligatoires.' }
-  }
-
-  if (password.length < 6) {
-    return { success: false, error: 'Le mot de passe doit contenir au moins 6 caractères.' }
-  }
-
-  const supabase = await createClient()
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  })
-
-  if (error) {
-    const message = error.message?.toLowerCase() ?? ''
-    if (message.includes('already') || message.includes('exist')) {
-      return {
-        success: false,
-        error: 'Un compte existe déjà pour cette adresse email. Veuillez vous connecter.',
-      }
-    }
-
-    return { success: false, error: error.message || 'Impossible de créer le compte.' }
-  }
-
-  if (!data.user?.id) {
+export async function signUp(
+  email: string,
+  password: string,
+): Promise<Result<SignUpResult>> {
+  const parsed = signUpSchema.safeParse({ email, password });
+  if (!parsed.success) {
     return {
       success: false,
-      error: 'Le compte a bien été créé, mais la confirmation de votre email est nécessaire avant l’accès.',
-    }
+      error:
+        'Saisissez une adresse e-mail valide et un mot de passe d’au moins 8 caractères.',
+    };
   }
 
-  const { error: companyError } = await supabase.from('companies').insert({
-    id: data.user.id,
-    nom: nomEntreprise,
-    email,
-  })
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.signUp({
+      email: parsed.data.email,
+      password: parsed.data.password,
+    });
 
-  if (companyError) {
-    const message = companyError.message?.toLowerCase() ?? ''
-    if (message.includes('duplicate') || message.includes('already') || message.includes('unique')) {
+    if (error) return { success: false, error: getAuthErrorMessage(error) };
+    if (!data.user) {
       return {
         success: false,
-        error: 'Une entreprise est déjà associée à ce compte. Veuillez vous connecter.',
-      }
+        error:
+          'Le compte n’a pas pu être créé. Réessayez dans quelques instants.',
+      };
     }
 
     return {
+      success: true,
+      data: { verificationRequired: !data.session },
+    };
+  } catch {
+    return {
       success: false,
-      error: companyError.message || 'La création de l’entreprise a échoué.',
-    }
-  }
-
-  return {
-    success: true,
-    needsEmailConfirmation: !data.session,
+      error: 'Le service d’inscription est temporairement indisponible.',
+    };
   }
 }
 
+export async function verifySignupCode(
+  email: string,
+  code: string,
+): Promise<Result<null>> {
+  const parsed = signupCodeSchema.safeParse({ email, code });
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: 'Saisissez une adresse e-mail valide et le code à 8 chiffres.',
+    };
+  }
+
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: parsed.data.email,
+      token: parsed.data.code,
+      type: 'signup',
+    });
+
+    if (error) return { success: false, error: getAuthErrorMessage(error) };
+    if (!data.user || !data.session) {
+      return {
+        success: false,
+        error: 'La vérification n’a pas abouti. Demandez un nouveau code.',
+      };
+    }
+    return { success: true, data: null };
+  } catch {
+    return {
+      success: false,
+      error: 'La vérification est temporairement indisponible. Réessayez.',
+    };
+  }
+}
+
+export async function resendSignupCode(email: string): Promise<Result<null>> {
+  const parsedEmail = signUpSchema.shape.email.safeParse(email);
+  if (!parsedEmail.success) {
+    return { success: false, error: 'Saisissez une adresse e-mail valide.' };
+  }
+
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: parsedEmail.data,
+    });
+
+    if (error) return { success: false, error: getAuthErrorMessage(error) };
+    return { success: true, data: null };
+  } catch {
+    return {
+      success: false,
+      error:
+        'Impossible d’envoyer le code pour le moment. Réessayez plus tard.',
+    };
+  }
+}
+
+export async function createCompany(name: string): Promise<Result<null>> {
+  const user = await requireUser();
+  const parsedName = companyNameSchema.safeParse(name);
+  if (!parsedName.success) {
+    return {
+      success: false,
+      error: 'Le nom de l’entreprise est obligatoire (120 caractères maximum).',
+    };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from('companies').upsert(
+    {
+      id: user.id,
+      nom: parsedName.data,
+      email: user.email ?? null,
+    },
+    { onConflict: 'id', ignoreDuplicates: true },
+  );
+
+  if (error) {
+    console.error('Erreur lors de la création de l’entreprise :', error);
+    return {
+      success: false,
+      error:
+        'Impossible de créer l’entreprise. Vérifiez vos informations et réessayez.',
+    };
+  }
+  return { success: true, data: null };
+}
+
 export async function signOut(): Promise<void> {
-  const supabase = await createClient()
-  await supabase.auth.signOut()
-  redirect('/login')
+  await requireUser();
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect('/login');
 }

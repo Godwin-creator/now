@@ -1,25 +1,23 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { createClient } from '@/utils/supabase/client'
-import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { createClient } from '@/utils/supabase/client';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { getAuthErrorCode, getAuthErrorMessage } from '@/lib/auth/result';
 import {
   LogIn,
   UserPlus,
   AlertCircle,
-  Building2,
   Mail,
   Lock,
   Eye,
   EyeOff,
-  Sparkles,
   ShieldCheck,
   Zap,
-  CheckCircle2,
   ArrowRight,
-} from 'lucide-react'
+} from 'lucide-react';
 
 // Phrases pour l'effet typewriter
 const TYPEWRITER_PHRASES = [
@@ -27,150 +25,97 @@ const TYPEWRITER_PHRASES = [
   'Scoring algorithmique prédictif du risque.',
   'Relances multicanales IA personnalisées.',
   'Optimisez la trésorerie de votre entreprise.',
-]
+];
 
 export default function LoginPage() {
-  const [isSignUp, setIsSignUp] = useState(false)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [companyName, setCompanyName] = useState('')
-  const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const [successMsg, setSuccessMsg] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   // ── Suivi du déplacement du curseur en temps réel ──
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePos({ x: e.clientX, y: e.clientY })
-    }
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
-  }, [])
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   // ── Animation Typewriter ──
-  const [phraseIndex, setPhraseIndex] = useState(0)
-  const [text, setText] = useState('')
-  const [isDeleting, setIsDeleting] = useState(false)
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [text, setText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    const currentPhrase = TYPEWRITER_PHRASES[phraseIndex]
-    if (!currentPhrase) return
+    const currentPhrase = TYPEWRITER_PHRASES[phraseIndex];
+    if (!currentPhrase) return;
 
-    const typeSpeed = isDeleting ? 30 : 65
-    const pauseTime = isDeleting ? 400 : 2200
+    const typeSpeed = isDeleting ? 30 : 65;
+    const pauseTime = isDeleting ? 400 : 2200;
 
     if (!isDeleting && text === currentPhrase) {
-      const timeout = setTimeout(() => setIsDeleting(true), pauseTime)
-      return () => clearTimeout(timeout)
+      const timeout = setTimeout(() => setIsDeleting(true), pauseTime);
+      return () => clearTimeout(timeout);
     }
 
     if (isDeleting && text === '') {
       const timeout = setTimeout(() => {
-        setIsDeleting(false)
-        setPhraseIndex((prev) => (prev + 1) % TYPEWRITER_PHRASES.length)
-      }, 0)
-      return () => clearTimeout(timeout)
+        setIsDeleting(false);
+        setPhraseIndex((prev) => (prev + 1) % TYPEWRITER_PHRASES.length);
+      }, 0);
+      return () => clearTimeout(timeout);
     }
 
     const timeout = setTimeout(() => {
       setText((prev) =>
         isDeleting
           ? currentPhrase.substring(0, prev.length - 1)
-          : currentPhrase.substring(0, prev.length + 1)
-      )
-    }, typeSpeed)
+          : currentPhrase.substring(0, prev.length + 1),
+      );
+    }, typeSpeed);
 
-    return () => clearTimeout(timeout)
-  }, [text, isDeleting, phraseIndex])
+    return () => clearTimeout(timeout);
+  }, [text, isDeleting, phraseIndex]);
 
   // ── Authentification Supabase ──
   const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setErrorMsg(null)
-    setSuccessMsg(null)
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg(null);
 
-    const supabase = createClient()
+    const supabase = createClient();
 
     try {
-      if (isSignUp) {
-        const { data, error } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
-        })
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
 
-        if (error) {
-          const message = error.message?.toLowerCase() ?? ''
-          setErrorMsg(
-            message.includes('already') || message.includes('exist')
-              ? 'Un compte existe déjà pour cette adresse email. Veuillez vous connecter.'
-              : error.message || 'Impossible de créer le compte.'
-          )
-          return
+      if (error) {
+        if (getAuthErrorCode(error) === 'email_not_confirmed') {
+          router.push(
+            `/signup/verify?email=${encodeURIComponent(email.trim())}&resend=1`,
+          );
+          return;
         }
-
-        if (!data.user?.id) {
-          setSuccessMsg('Compte créé. Vérifiez votre email pour confirmer votre inscription.')
-          setTimeout(() => router.push('/login'), 1200)
-          return
-        }
-
-        const { error: companyError } = await supabase.from('companies').insert({
-          id: data.user.id,
-          nom: companyName.trim() || 'Mon Entreprise',
-          email: email.trim(),
-        })
-
-        if (companyError) {
-          const message = companyError.message?.toLowerCase() ?? ''
-          setErrorMsg(
-            message.includes('duplicate') || message.includes('already') || message.includes('unique')
-              ? 'Une entreprise est déjà associée à ce compte. Veuillez vous connecter.'
-              : companyError.message || 'La création de l’entreprise a échoué.'
-          )
-          return
-        }
-
-        setSuccessMsg(
-          data.session
-            ? 'Compte créé avec succès ! Redirection en cours…'
-            : 'Compte créé. Vérifiez votre email pour confirmer votre inscription.'
-        )
-
-        setTimeout(() => {
-          if (data.session) {
-            router.push('/dashboard')
-            router.refresh()
-            return
-          }
-          router.push('/login')
-          router.refresh()
-        }, 1200)
+        setErrorMsg(getAuthErrorMessage(error));
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
-        })
-
-        if (error) {
-          setErrorMsg(error.message)
-        } else {
-          router.push('/dashboard')
-          router.refresh()
-        }
+        router.push('/dashboard');
+        router.refresh();
       }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erreur d'authentification."
-      setErrorMsg(msg)
+    } catch {
+      setErrorMsg('La connexion est temporairement indisponible. Réessayez.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const tickerText = 'NOW SYSTEM · RECOUVREMENT AMIABLE PAR IA · SCORING RISQUE · MULTICANAL WHATSAPP EMAIL SMS TEL · SUPABASE RLS · '
+  const tickerText =
+    'NOW SYSTEM · RECOUVREMENT AMIABLE PAR IA · SCORING RISQUE · MULTICANAL WHATSAPP EMAIL SMS TEL · SUPABASE RLS · ';
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-[#0a1520] text-white flex flex-col justify-between select-none">
@@ -321,44 +266,23 @@ export default function LoginPage() {
           <div className="grid grid-cols-2 border-b border-gray-200">
             <button
               type="button"
-              onClick={() => {
-                setIsSignUp(false)
-                setErrorMsg(null)
-                setSuccessMsg(null)
-              }}
-              className={`relative py-3.5 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${
-                !isSignUp ? 'text-[#15274D] bg-white' : 'text-gray-400 bg-gray-50 hover:text-gray-700'
-              }`}
+              className="relative py-3.5 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 text-[#15274D] bg-white"
             >
-              <LogIn size={14} className={!isSignUp ? 'text-[#15274D]' : 'text-gray-400'} />
+              <LogIn size={14} className="text-[#15274D]" />
               <span>Connexion</span>
-              {!isSignUp && (
-                <motion.div
-                  layoutId="auth-tab"
-                  className="absolute bottom-0 left-0 right-0 h-1 bg-[#15274D]"
-                />
-              )}
+              <motion.div
+                layoutId="auth-tab"
+                className="absolute bottom-0 left-0 right-0 h-1 bg-[#15274D]"
+              />
             </button>
 
             <button
               type="button"
-              onClick={() => {
-                setIsSignUp(true)
-                setErrorMsg(null)
-                setSuccessMsg(null)
-              }}
-              className={`relative py-3.5 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${
-                isSignUp ? 'text-[#15274D] bg-white' : 'text-gray-400 bg-gray-50 hover:text-gray-700'
-              }`}
+              onClick={() => router.push('/signup')}
+              className="relative py-3.5 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 text-gray-400 bg-gray-50 hover:text-gray-700"
             >
-              <UserPlus size={14} className={isSignUp ? 'text-[#15274D]' : 'text-gray-400'} />
+              <UserPlus size={14} className="text-gray-400" />
               <span>Créer un compte</span>
-              {isSignUp && (
-                <motion.div
-                  layoutId="auth-tab"
-                  className="absolute bottom-0 left-0 right-0 h-1 bg-[#15274D]"
-                />
-              )}
             </button>
           </div>
 
@@ -370,59 +294,25 @@ export default function LoginPage() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="flex items-start gap-2.5 p-3.5 bg-rose-50 border-l-4 border-rose-500 text-rose-800 text-xs font-bold"
+                  role="alert"
+                  className="flex items-start gap-2.5 p-3.5 bg-rose-50 border-l-4 border-rose-500 text-rose-800 text-sm font-bold"
                 >
-                  <AlertCircle size={15} className="shrink-0 mt-0.5 text-rose-600" />
+                  <AlertCircle
+                    size={15}
+                    className="shrink-0 mt-0.5 text-rose-600"
+                  />
                   <span>{errorMsg}</span>
-                </motion.div>
-              )}
-              {successMsg && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="flex items-center gap-2.5 p-3.5 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-800 text-xs font-bold"
-                >
-                  <CheckCircle2 size={15} className="shrink-0 text-emerald-600" />
-                  <span>{successMsg}</span>
                 </motion.div>
               )}
             </AnimatePresence>
 
             <form onSubmit={handleAuth} className="space-y-4">
-              <AnimatePresence mode="wait">
-                {isSignUp && (
-                  <motion.div
-                    key="company-field"
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">
-                      Nom de l&apos;entreprise *
-                    </label>
-                    <div className="relative">
-                      <Building2
-                        size={15}
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                      />
-                      <input
-                        type="text"
-                        required
-                        value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
-                        placeholder="ex: Lomé Tech Solutions"
-                        className="input-anim w-full pl-10 pr-4 py-3 text-sm font-medium text-gray-900 bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-now-yellow/20 focus:border-now-yellow"
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
               {/* Champ Email */}
               <div>
-                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">
+                <label
+                  htmlFor="login-email"
+                  className="block text-sm font-semibold text-gray-700 mb-1.5"
+                >
                   Email professionnel *
                 </label>
                 <div className="relative">
@@ -433,6 +323,7 @@ export default function LoginPage() {
                   <input
                     type="email"
                     required
+                    id="login-email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="contact@entreprise.com"
@@ -443,7 +334,10 @@ export default function LoginPage() {
 
               {/* Champ Mot de passe avec toggle visibilité */}
               <div>
-                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">
+                <label
+                  htmlFor="login-password"
+                  className="block text-sm font-semibold text-gray-700 mb-1.5"
+                >
                   Mot de passe *
                 </label>
                 <div className="relative">
@@ -454,7 +348,7 @@ export default function LoginPage() {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
-                    minLength={6}
+                    id="login-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
@@ -463,7 +357,12 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                    aria-label={
+                      showPassword
+                        ? 'Masquer le mot de passe'
+                        : 'Afficher le mot de passe'
+                    }
+                    className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-gray-500 hover:text-gray-700"
                   >
                     {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
@@ -481,11 +380,6 @@ export default function LoginPage() {
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white animate-spin" />
                     <span>Traitement en cours…</span>
                   </>
-                ) : isSignUp ? (
-                  <>
-                    <Sparkles size={14} className="text-[#FFC000]" />
-                    <span>Créer mon compte entreprise</span>
-                  </>
                 ) : (
                   <>
                     <Zap size={14} className="text-[#FFC000]" />
@@ -497,17 +391,13 @@ export default function LoginPage() {
 
             {/* Pied de formulaire */}
             <div className="pt-4 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500 font-semibold">
-              <span>{isSignUp ? 'Déjà inscrit ?' : 'Nouveau sur NowPay ?'}</span>
+              <span>Nouveau sur NowPay ?</span>
               <button
                 type="button"
-                onClick={() => {
-                  setIsSignUp(!isSignUp)
-                  setErrorMsg(null)
-                  setSuccessMsg(null)
-                }}
+                onClick={() => router.push('/signup')}
                 className="text-[#15274D] font-black uppercase tracking-wider hover:underline flex items-center gap-1"
               >
-                <span>{isSignUp ? 'Se connecter' : 'Créer un compte'}</span>
+                <span>Créer un compte</span>
                 <ArrowRight size={11} />
               </button>
             </div>
@@ -526,5 +416,5 @@ export default function LoginPage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }

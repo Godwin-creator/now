@@ -18,6 +18,9 @@
 | D-07 | L'automatisation 1.0 = **e-mail récapitulatif quotidien au gérant** (pas aux débiteurs) | Revue |
 | D-08 | Les données de test actuelles sont supprimées. Deux projets Supabase : `dev` et `prod`, schéma uniquement par migrations versionnées | Godwin + revue |
 | D-09 | Calendrier : sprint de lancement du 16 au 21 octobre, puis 1 session bornée par semaine pour les retours (rentrée le 19 octobre) | Godwin |
+| D-10 | Confirmation de l’inscription par code à 8 chiffres envoyé par e-mail (`verifyOtp`, type `signup`) ; le gabarit « Confirm signup » affiche le code, sans lien de confirmation | Godwin |
+| D-11 | L’entreprise est créée après authentification, sur `/onboarding`, par une action idempotente liée à `user.id`. La policy RLS n’est pas assouplie | Godwin |
+| D-12 | SMTP personnalisé requis pour les e-mails Auth en production ; Google OAuth reste une option à évaluer en P5 | Godwin |
 
 ## 2. Contexte produit (rappel)
 
@@ -218,10 +221,11 @@ Chaque phase = une branche courte + une preview Vercel + critères d'acceptation
 |---|---|---|---|
 | **P0 — Fondations** | Next ≥ 16.4.2, `npm audit fix`, `.env.example`, README, `AGENTS.md`, middleware d'auth, Tailwind v4 (`@theme`), Vitest, Prettier, scripts `typecheck` / `check`, CI GitHub Actions, suppression du code mort | ~2 h | `npm run check` vert en local et en CI ; `npm audit` sans critique ni haute (ou exception documentée) ; accès `/dashboard` sans session refusé par le middleware |
 | **P1 — Supabase** | Projets `dev` et `prod`, CLI, migration de référence, migrations 5.3, RLS + test des policies, SMTP perso, réglages Auth, types générés, purge des données de test | ~3 h | Un script de test prouve qu'un utilisateur A ne lit, n'écrit et ne référence aucune donnée de B ; `pg_policies` relu ; types générés compilent |
+| **P1.5 — Auth et onboarding** | Inscription unique par Server Action, confirmation par code OTP à 8 chiffres, renvoi temporisé et erreurs Auth en français ; onboarding entreprise idempotent après authentification ; callback conservé pour OAuth | ~2 h | Inscription sans écriture d’entreprise ; OTP valide ouvre `/onboarding` ; OTP invalide/expiré et rate limit affichent des messages clairs ; `/dashboard` exige une entreprise |
 | **P2 — Domaine pur** | `lib/domain` : scoring, timing, canal effectif, argent, dates, statut dérivé de facture, récidive ; tests | ~3 h | Couverture ≥ 90 % sur `lib/domain` ; cas limites testés (0 j, 90 j, > 90 j, paiement partiel, solde nul, coordonnée manquante) ; plus de scoring dupliqué |
-| **P3 — Actions et IA** | Server Actions minces (auth → zod → domaine → repo), `getUser` partout dont OCR, quotas `ai_usage`, `lib/ai` (sortie validée, repli templates, timeouts), `updateClient`, paiement partiel, statuts de relance, `error.tsx` / `loading.tsx`, inscription unique | ~4 h | Aucune action sans `requireUser` ; OCR et IA refusent un appel anonyme et au-delà du quota ; une panne Gemini donne un template étiqueté ; tests des actions (mocks) verts |
+| **P3 — Actions et IA** | Server Actions minces (auth → zod → domaine → repo), `getUser` partout dont OCR, quotas `ai_usage`, `lib/ai` (sortie validée, repli templates, timeouts), `updateClient`, paiement partiel, statuts de relance, `error.tsx` / `loading.tsx` | ~4 h | Aucune action sans `requireUser` ; OCR et IA refusent un appel anonyme et au-delà du quota ; une panne Gemini donne un template étiqueté ; tests des actions (mocks) verts |
 | **P4 — UX mobile** | File « À faire aujourd'hui », cartes mobiles, formulaire 6 champs, CTA relance visible, cibles 44 px, a11y, filtres CDC, KPI corrigés, accents, remplacement de `framer-motion` par des transitions CSS | ~5 h | Testé à 390 px de large sur un vrai téléphone ; créance créée en < 30 s ; relance envoyée en < 1 min ; aucun scroll horizontal ; Lighthouse accessibilité ≥ 95 |
-| **P5 — Marque et légal** | Landing honnête et recentrée, redirections de domaine, mentions légales, confidentialité, suppression de compte, vérification hébergement | ~2 h | Plus aucun chiffre non sourcé ; une seule marque ; suppression de compte fonctionnelle |
+| **P5 — Marque et légal** | Landing honnête et recentrée, redirections de domaine, mentions légales, confidentialité, suppression de compte, vérification hébergement ; Google OAuth en option | ~2 h | Plus aucun chiffre non sourcé ; une seule marque ; suppression de compte fonctionnelle |
 | **P6 — Récapitulatif quotidien** | Cron Vercel (07:00 UTC = 07:00 Lomé), e-mail via SMTP / Resend, accès `service_role` isolé dans `lib/supabase/admin.ts` (`server-only`), opt-in / opt-out | ~2 h | E-mail reçu avec la liste du jour ; route protégée par `CRON_SECRET` ; aucune autre utilisation de `service_role` |
 | **P7 — Pilote** | 3 à 5 gérants réels, observation de leur première session, journal des retours | continu | 3 gérants créent 3 créances et envoient 1 relance **sans aide** en < 5 min |
 
@@ -262,3 +266,6 @@ Chaque phase = une branche courte + une preview Vercel + critères d'acceptation
 | Date | Décision |
 |---|---|
 | 16/10/2026 | Création du document ; décisions D-01 à D-09 |
+| 16/10/2026 | D-10 : remplacer le lien d’inscription par un code OTP e-mail à 8 chiffres |
+| 16/10/2026 | D-11 : séparer la création de l’entreprise de l’inscription ; finaliser sur `/onboarding` après authentification |
+| 16/10/2026 | D-12 : configurer un SMTP personnalisé ; garder Google OAuth comme option de P5 |

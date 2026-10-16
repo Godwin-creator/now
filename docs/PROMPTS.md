@@ -144,8 +144,8 @@ Critères : couverture ≥ 90 % sur lib/domain ; aucune duplication de règle ; 
    vérifie qu'une ligne a bien été écrite). Remplace `marquerCommePayee`. Le statut de facture reste dérivé.
 7. Clients : `updateClient` persistant (zod, RLS), + détection de doublon (même nom normalisé dans
    l'entreprise) à la création.
-8. Auth : une seule Server Action `signUpWithCompany` utilisée par `/signup` ET `/login` ; supprime la
-   duplication côté client.
+8. Réutilise le flux Auth livré en P1.5 (`signUp`, `verifySignupCode`, `createCompany`) ; ne réintroduis
+   pas de logique d’inscription dupliquée ni de confirmation par lien.
 9. Robustesse : `app/error.tsx`, `app/global-error.tsx`, `app/dashboard/loading.tsx`.
 10. Découpe les fichiers > 300 lignes touchés par cette phase.
 

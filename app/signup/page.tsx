@@ -1,54 +1,52 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft, Building2, Eye, EyeOff, Lock, Mail, Sparkles, UserPlus } from 'lucide-react'
-import { signUpWithCompany } from '@/app/actions/auth'
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import {
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  Sparkles,
+  UserPlus,
+} from 'lucide-react';
+import { signUp } from '@/app/actions/auth';
 
 export default function SignupPage() {
-  const [companyName, setCompanyName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setLoading(true)
-    setError(null)
-    setSuccess(null)
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
 
     try {
-      const formData = new FormData()
-      formData.set('nomEntreprise', companyName)
-      formData.set('email', email)
-      formData.set('password', password)
-
-      const result = await signUpWithCompany(formData)
-
+      const result = await signUp(email, password);
       if (!result.success) {
-        setError(result.error ?? 'Impossible de créer le compte.')
-        return
+        setError(result.error);
+        return;
       }
 
-      if (result.needsEmailConfirmation) {
-        setSuccess('Compte créé. Vérifiez votre email pour finaliser votre inscription.')
-        setTimeout(() => router.push('/login'), 1500)
-        return
+      if (result.data.verificationRequired) {
+        router.push(`/signup/verify?email=${encodeURIComponent(email.trim())}`);
+        return;
       }
 
-      setSuccess('Compte créé avec succès ! Redirection en cours…')
-      setTimeout(() => router.push('/dashboard'), 1200)
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de l’inscription.')
+      router.push('/onboarding');
+      router.refresh();
+    } catch {
+      setError('Le service d’inscription est temporairement indisponible.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-now-bg flex items-center justify-center px-4 py-10">
@@ -57,8 +55,12 @@ export default function SignupPage() {
 
         <div className="px-6 py-5 border-b border-gray-200 flex items-center justify-between gap-3">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-now-blue-light">Onboarding</p>
-            <h1 className="text-xl font-black text-now-blue">Créer mon compte</h1>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-now-blue-light">
+              Onboarding
+            </p>
+            <h1 className="text-xl font-black text-now-blue">
+              Créer mon compte
+            </h1>
           </div>
           <div className="flex items-center justify-center rounded-full bg-now-yellow/15 p-2 text-now-blue">
             <UserPlus size={18} />
@@ -67,43 +69,31 @@ export default function SignupPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5 p-6">
           {error && (
-            <div className="border-l-4 border-red-500 bg-red-50 p-3 text-xs font-bold text-red-700">
+            <div
+              role="alert"
+              className="border-l-4 border-red-500 bg-red-50 p-3 text-sm font-bold text-red-700"
+            >
               {error}
             </div>
           )}
 
-          {success && (
-            <div className="border-l-4 border-emerald-500 bg-emerald-50 p-3 text-xs font-bold text-emerald-700">
-              {success}
-            </div>
-          )}
-
           <div>
-            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-now-blue-light">
-              Nom de l’entreprise *
-            </label>
-            <div className="relative">
-              <Building2 size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                required
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="ex: Lomé Business Group"
-                className="w-full border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm font-medium text-gray-900 focus:border-now-yellow focus:ring-2 focus:ring-now-yellow/20"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-now-blue-light">
+            <label
+              htmlFor="email"
+              className="mb-1.5 block text-sm font-semibold text-now-blue-light"
+            >
               Email professionnel *
             </label>
             <div className="relative">
-              <Mail size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Mail
+                size={15}
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+              />
               <input
                 type="email"
                 required
+                id="email"
+                maxLength={254}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="contact@entreprise.com"
@@ -113,15 +103,23 @@ export default function SignupPage() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-now-blue-light">
+            <label
+              htmlFor="password"
+              className="mb-1.5 block text-sm font-semibold text-now-blue-light"
+            >
               Mot de passe *
             </label>
             <div className="relative">
-              <Lock size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Lock
+                size={15}
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+              />
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
-                minLength={6}
+                id="password"
+                minLength={8}
+                maxLength={128}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -130,7 +128,12 @@ export default function SignupPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-now-blue"
+                aria-label={
+                  showPassword
+                    ? 'Masquer le mot de passe'
+                    : 'Afficher le mot de passe'
+                }
+                className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-gray-500 transition hover:text-now-blue"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -157,7 +160,10 @@ export default function SignupPage() {
 
           <div className="flex items-center justify-between border-t border-gray-200 pt-4 text-[11px] font-bold text-gray-600">
             <span>Vous avez déjà un compte ?</span>
-            <Link href="/login" className="inline-flex items-center gap-1 text-now-blue hover:underline">
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1 text-now-blue hover:underline"
+            >
               Se connecter
               <ArrowLeft size={12} className="rotate-180" />
             </Link>
@@ -165,5 +171,5 @@ export default function SignupPage() {
         </form>
       </div>
     </div>
-  )
+  );
 }
