@@ -91,3 +91,37 @@ fournies par votre prestataire SMTP :
 Ne réutilisez pas le mot de passe du compte e-mail. Vérifiez la délivrabilité
 des e-mails de confirmation et de réinitialisation avant d'ouvrir les
 inscriptions en production.
+
+## Domaine canonique et Vercel
+
+L’origine canonique de NowPay est `https://www.nowpay.website`. Les pages
+publiques déclarent leur URL canonique et leurs métadonnées Open Graph. Le
+proxy Next.js redirige en 308 les requêtes reçues sur
+`now-one-sigma.vercel.app` vers le même chemin sur le domaine canonique.
+
+Pour que cette redirection s’applique, conserver `now-one-sigma.vercel.app`
+comme domaine attaché au même projet Vercel que l’application. Dans **Project
+Settings → Domains**, vérifier aussi que `www.nowpay.website` est le domaine
+principal. Une redirection de domaine Vercel vers le domaine principal peut
+être définie comme règle de plateforme; elle est préférable si le domaine
+alias est déplacé vers un autre projet. Vérifier les deux hôtes après chaque
+changement de domaine avec une requête HTTP et confirmer le statut 308 et
+l’URL de destination.
+
+Le plan d’hébergement doit être vérifié pour l’usage commercial envisagé :
+Vercel Hobby est destiné à un usage personnel/non commercial. Voir les
+conditions et limites du plan Vercel avant toute exploitation commerciale.
+
+## Suppression de compte
+
+La suppression des données du compte utilise la clé serveur
+`SUPABASE_SERVICE_ROLE_KEY` uniquement dans `lib/supabase/admin.ts`. Renseigner
+cette variable dans les environnements Preview/Development/Production Vercel
+depuis les paramètres du projet, sans préfixe `NEXT_PUBLIC_`. La suppression
+de l’utilisateur Auth déclenche les contraintes `ON DELETE CASCADE` de
+l’entreprise et de ses clients, factures, paiements, relances et compteurs IA.
+
+Avant de proposer cette action à des utilisateurs, vérifier la cascade sur le
+projet Supabase `dev` avec un compte de test jetable et confirmer que le compte
+Auth ainsi que toutes ses lignes liées ont disparu. Ne jamais utiliser un
+compte ou des données de production pour ce test.

@@ -21,10 +21,12 @@ type SignUpResult = { verificationRequired: boolean };
 export async function signUp(
   email: string,
   password: string,
+  legalAccepted: boolean,
+  thirdPartyDataRightsConfirmed: boolean,
 ): Promise<Result<SignUpResult>> {
-  const parsed = signUpSchema.safeParse({ email, password });
+  const parsed = signUpSchema.safeParse({ email, password, legalAccepted, thirdPartyDataRightsConfirmed });
   if (!parsed.success) {
-    return failure('VALIDATION', 'Saisissez une adresse e-mail valide et un mot de passe d’au moins 8 caractères.');
+    return failure('VALIDATION', 'Saisissez une adresse e-mail valide, un mot de passe d’au moins 8 caractères et confirmez les deux cases requises.');
   }
 
   try {
@@ -32,6 +34,13 @@ export async function signUp(
     const { data, error } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
+      options: {
+        data: {
+          legal_consent_version: '2026-10-17',
+          legal_consent_at: new Date().toISOString(),
+          third_party_contact_rights_confirmed: true,
+        },
+      },
     });
 
     if (error) return failure(getAuthErrorCode(error) ?? 'AUTH', getAuthErrorMessage(error));

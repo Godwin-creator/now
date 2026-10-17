@@ -49,22 +49,29 @@ describe('signUp', () => {
     const from = vi.spyOn(supabase, 'from');
     mocks.createServerClient.mockResolvedValue(supabase);
 
-    await expect(signUp('gerant@example.com', 'secure123')).resolves.toEqual({
+    await expect(signUp('gerant@example.com', 'secure123', true, true)).resolves.toEqual({
       ok: true,
       data: { verificationRequired: true },
     });
 
-    expect(signUpCall).toHaveBeenCalledWith({
+    expect(signUpCall).toHaveBeenCalledWith(expect.objectContaining({
       email: 'gerant@example.com',
       password: 'secure123',
-    });
+      options: {
+        data: expect.objectContaining({
+          legal_consent_version: '2026-10-17',
+          legal_consent_at: expect.any(String),
+          third_party_contact_rights_confirmed: true,
+        }),
+      },
+    }));
     expect(from).not.toHaveBeenCalled();
   });
 
   it('rejects passwords shorter than eight characters before contacting Supabase', async () => {
-    await expect(signUp('gerant@example.com', '1234567')).resolves.toEqual({
+    await expect(signUp('gerant@example.com', '1234567', true, true)).resolves.toEqual({
       ok: false,
-      error: { code: 'VALIDATION', message: 'Saisissez une adresse e-mail valide et un mot de passe d’au moins 8 caractères.' },
+      error: { code: 'VALIDATION', message: 'Saisissez une adresse e-mail valide, un mot de passe d’au moins 8 caractères et confirmez les deux cases requises.' },
     });
     expect(mocks.createServerClient).not.toHaveBeenCalled();
   });
@@ -81,7 +88,7 @@ describe('signUp', () => {
     });
     mocks.createServerClient.mockResolvedValue(supabase);
 
-    const result = await signUp('gerant@example.com', 'secure123');
+    const result = await signUp('gerant@example.com', 'secure123', true, true);
 
     expect(result).toEqual({
       ok: false,
@@ -90,6 +97,12 @@ describe('signUp', () => {
     if (result.ok)
       throw new Error('La limitation de débit aurait dû échouer.');
     expect(result.error.message).not.toContain('raw server message');
+  });
+
+  it('requires both legal confirmations before contacting Supabase', async () => {
+    const result = await signUp('gerant@example.com', 'secure123', true, false);
+    expect(result.ok).toBe(false);
+    expect(mocks.createServerClient).not.toHaveBeenCalled();
   });
 });
 

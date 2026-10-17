@@ -114,7 +114,7 @@ export default function LoginPage() {
   };
 
   const tickerText =
-    'NOW SYSTEM · RECOUVREMENT AMIABLE PAR IA · SCORING RISQUE · MULTICANAL WHATSAPP EMAIL SMS TEL · SUPABASE RLS · ';
+    'NOWPAY · SUIVI DES CRÉANCES · MESSAGES À RELIRE · ENVOI PAR LE GÉRANT · ';
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-[#0a1520] text-white flex flex-col justify-between select-none">
@@ -182,7 +182,7 @@ export default function LoginPage() {
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[460px] sm:w-[600px] pointer-events-none z-0 select-none overflow-visible"
         >
           <Image
-            src="/logo-nowpay2.png"
+            src="/logo-nowpay.png"
             alt="NowPay Background Watermark"
             width={600}
             height={600}

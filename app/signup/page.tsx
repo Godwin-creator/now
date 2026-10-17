@@ -17,6 +17,8 @@ import { signUp } from '@/app/actions/auth';
 export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [legalAccepted, setLegalAccepted] = useState(false);
+  const [thirdPartyDataRightsConfirmed, setThirdPartyDataRightsConfirmed] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -28,7 +30,7 @@ export default function SignupPage() {
     setError(null);
 
     try {
-      const result = await signUp(email, password);
+      const result = await signUp(email, password, legalAccepted, thirdPartyDataRightsConfirmed);
       if (!result.ok) {
         setError(result.error.message);
         return;
@@ -140,9 +142,20 @@ export default function SignupPage() {
             </div>
           </div>
 
+          <div className="space-y-3 text-sm leading-6 text-slate-800">
+            <div className="flex items-start gap-3">
+              <input id="legal-accepted" type="checkbox" required checked={legalAccepted} onChange={(event) => setLegalAccepted(event.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-blue-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-800" />
+              <label htmlFor="legal-accepted">J’accepte les <Link href="/conditions-utilisation" className="font-semibold underline">conditions d’utilisation</Link> et la <Link href="/confidentialite" className="font-semibold underline">politique de confidentialité</Link>.</label>
+            </div>
+            <div className="flex items-start gap-3">
+              <input id="third-party-rights" type="checkbox" required checked={thirdPartyDataRightsConfirmed} onChange={(event) => setThirdPartyDataRightsConfirmed(event.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-blue-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-800" />
+              <label htmlFor="third-party-rights">Je confirme avoir le droit de saisir les coordonnées de mes clients dans NowPay.</label>
+            </div>
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !legalAccepted || !thirdPartyDataRightsConfirmed}
             className="flex w-full items-center justify-center gap-2 bg-now-blue px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:bg-now-blue-dark disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? (

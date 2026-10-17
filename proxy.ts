@@ -3,6 +3,18 @@ import { NextResponse, type NextRequest } from 'next/server'
 import type { Database } from '@/types/database'
 
 export async function proxy(request: NextRequest) {
+  if (request.nextUrl.hostname.toLowerCase() === 'now-one-sigma.vercel.app') {
+    const destination = new URL(
+      `${request.nextUrl.pathname}${request.nextUrl.search}`,
+      'https://www.nowpay.website',
+    )
+    return NextResponse.redirect(destination, 308)
+  }
+
+  if (!request.nextUrl.pathname.startsWith('/dashboard')) {
+    return NextResponse.next({ request })
+  }
+
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient<Database>(
@@ -39,5 +51,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: ['/:path*'],
 }

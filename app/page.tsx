@@ -1,268 +1,107 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 
-const stats = [
-  { value: '3x', label: 'plus de rapidité' },
-  { value: '94%', label: 'taux de relance priorisée' },
-  { value: '24/7', label: 'suivi automatique' },
-]
+export const metadata: Metadata = {
+  title: 'Vos relances, simplement',
+  description: "Voyez qui relancer aujourd'hui, envoyez le bon message en moins d'une minute.",
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: 'NowPay — vos relances, simplement',
+    description: "Voyez qui relancer aujourd'hui, envoyez le bon message en moins d'une minute.",
+    url: '/',
+    siteName: 'NowPay',
+    locale: 'fr_FR',
+    type: 'website',
+  },
+}
 
-const benefits = [
-  'Priorisation intelligente des créances à risque',
-  'Relances automatiques avec IA et suivi d’actions',
-  'Vue d’ensemble claire pour les équipes de recouvrement',
-]
-
-const features = [
-  {
-    title: 'Score de risque',
-    text: 'Analyse les dossiers les plus urgents pour concentrer les efforts là où ils ont le plus d’impact.',
-  },
-  {
-    title: 'Relances automatisées',
-    text: 'Envoi de rappels, suivis et escalades intelligents sans lourde charge manuelle.',
-  },
-  {
-    title: 'Dashboard pro',
-    text: 'Un tableau de bord synthétique pour piloter les encours, paiements et relances en temps réel.',
-  },
+const steps = [
+  ['Voyez les priorités', 'Retrouvez les créances à traiter dans votre espace.'],
+  ['Préparez le message', 'NowPay propose un texte que vous pouvez relire et modifier.'],
+  ['Envoyez vous-même', 'Ouvrez WhatsApp, votre messagerie ou SMS pour envoyer le message.'],
 ]
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="mx-auto max-w-7xl px-6 py-6">
-        <nav className="flex items-center justify-between rounded-full border border-slate-200 bg-white/80 px-5 py-3 shadow-sm backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/logo_now.png"
-              alt="NowPay logo"
-              width={180}
-              height={72}
-              priority
-              className="h-10 w-auto object-contain"
-            />
+      <header className="mx-auto max-w-6xl px-4 py-4 sm:px-6">
+        <nav aria-label="Navigation principale" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+          <Link href="/" aria-label="NowPay, accueil" className="rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-800">
+            <Image src="/logo-nowpay.png" alt="NowPay" width={180} height={72} priority className="h-10 w-auto object-contain" />
+          </Link>
+          <div className="hidden items-center gap-6 text-sm font-medium text-slate-700 md:flex">
+            <a href="#fonctionnement" className="rounded focus-visible:outline-2 focus-visible:outline-blue-800">Comment ça marche</a>
+            <Link href="/mentions-legales" className="rounded focus-visible:outline-2 focus-visible:outline-blue-800">Mentions légales</Link>
           </div>
-
-          <div className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
-            <a href="#avantages" className="transition hover:text-[#123274]">Avantages</a>
-            <a href="#fonctionnalites" className="transition hover:text-[#123274]">Fonctionnalités</a>
-            <a href="#contact" className="transition hover:text-[#123274]">Contact</a>
+          <div className="flex items-center gap-2">
+            <Link href="/login" className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-blue-800">Se connecter</Link>
+            <Link href="/signup" className="inline-flex min-h-11 items-center rounded-xl bg-blue-900 px-4 text-sm font-bold text-white hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-800">Créer un compte</Link>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[#123274] hover:text-[#123274]"
-            >
-              Tester
-            </Link>
-            <Link
-              href="/dashboard"
-              className="rounded-full bg-[#123274] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-[#123274]/20 transition hover:bg-[#0f2d67]"
-            >
-              Accéder au dashboard
-            </Link>
-          </div>
+          <details className="group relative w-full md:hidden">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-800 focus-visible:outline-2 focus-visible:outline-blue-800">Menu</summary>
+            <div className="mt-2 grid gap-1 rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
+              <a href="#fonctionnement" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-slate-50">Comment ça marche</a>
+              <Link href="/mentions-legales" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-slate-50">Mentions légales</Link>
+              <Link href="/confidentialite" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-slate-50">Confidentialité</Link>
+            </div>
+          </details>
         </nav>
       </header>
 
-      <section className="mx-auto max-w-7xl px-6 pb-16 pt-8 md:pb-24 md:pt-12">
-        <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
-          <div>
-            <span className="inline-flex items-center rounded-full border border-[#123274]/15 bg-[#123274]/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#123274]">
-              Recouvrement intelligent
-            </span>
-
-            <div className="mt-6 max-w-xl">
-              <Image
-                src="/logo_now.png"
-                alt="Logo NowPay"
-                width={680}
-                height={300}
-                priority
-                className="h-auto w-full max-w-xl object-contain"
-              />
-            </div>
-
-            <p className="mt-6 max-w-lg text-lg leading-8 text-slate-600">
-              Centralisez les créances, priorisez les dossiers à risque et automatisez les relances pour améliorer votre taux de récupération sans effort manuel.
-            </p>
-
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <Link
-                href="/signup"
-                className="rounded-full bg-[#FFD100] px-6 py-3 text-sm font-bold text-slate-900 shadow-lg shadow-[#FFD100]/30 transition hover:-translate-y-0.5 hover:bg-[#f7c800]"
-              >
-                Tester NowPay
-              </Link>
-              <Link
-                href="/dashboard"
-                className="rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-bold text-slate-800 transition hover:border-[#123274] hover:text-[#123274]"
-              >
-                Accéder au dashboard
-              </Link>
-            </div>
-
-            <ul className="mt-8 space-y-3 text-sm text-slate-700">
-              {benefits.map((benefit) => (
-                <li key={benefit} className="flex items-center gap-3">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFD100] text-xs font-black text-slate-900">
-                    ✓
-                  </span>
-                  {benefit}
-                </li>
-              ))}
-            </ul>
+      <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-16 pt-10 sm:px-6 md:py-20 lg:grid-cols-2">
+        <div>
+          <p className="text-sm font-bold uppercase tracking-wide text-blue-800">Pour les gérants de PME</p>
+          <h1 className="mt-4 text-4xl font-black leading-tight tracking-tight sm:text-5xl">Voyez qui relancer aujourd&apos;hui, envoyez le bon message en moins d&apos;une minute.</h1>
+          <p className="mt-5 text-lg leading-8 text-slate-700">Depuis votre téléphone, retrouvez les créances à suivre et préparez une relance adaptée. Vous gardez la main sur chaque message et son envoi.</p>
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+            <Link href="/signup" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-yellow-400 px-6 text-base font-bold text-slate-950 hover:bg-yellow-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-800">Créer mon compte</Link>
+            <Link href="/login" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-6 text-base font-bold text-slate-800 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-blue-800">Se connecter</Link>
           </div>
-
-          <div className="relative">
-            <div className="absolute -left-10 top-12 h-32 w-32 rounded-full bg-[#FFD100]/30 blur-3xl" />
-            <div className="absolute -right-8 bottom-14 h-36 w-36 rounded-full bg-[#123274]/20 blur-3xl" />
-
-            <div className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_30px_90px_rgba(18,50,116,0.15)]">
-              <div className="rounded-[1.5rem] bg-gradient-to-br from-[#123274] via-[#183d8d] to-[#1d4fb9] p-5 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-blue-100">Performance</p>
-                    <h2 className="mt-3 text-3xl font-black">+28%</h2>
-                  </div>
-                  <div className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-blue-100">
-                    Ce mois
-                  </div>
-                </div>
-
-                <div className="mt-8 rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
-                  <div className="flex items-center justify-between text-sm text-blue-50">
-                    <span>Récupération</span>
-                    <span className="font-semibold">82.4%</span>
-                  </div>
-                  <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-white/15">
-                    <div className="h-full w-[82%] rounded-full bg-[#FFD100]" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-4 sm:grid-cols-3">
-                {stats.map((stat) => (
-                  <div key={stat.label} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <div className="text-2xl font-black text-[#123274]">{stat.value}</div>
-                    <div className="mt-1 text-xs text-slate-600">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-700">Dossiers prioritaires</p>
-                    <p className="mt-1 text-xs text-slate-500">12 créances à relancer aujourd’hui</p>
-                  </div>
-                  <span className="rounded-full bg-[#FFD100]/20 px-2.5 py-1 text-xs font-bold text-[#123274]">
-                    High risk
-                  </span>
-                </div>
-              </div>
-            </div>
+          <p className="mt-4 text-sm text-slate-700">Les messages sont relus et envoyés par vous. NowPay ne les envoie pas automatiquement.</p>
+        </div>
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl sm:p-7" aria-label="Exemple d’une relance préparée dans NowPay">
+          <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
+            <Image src="/logo-nowpay.png" alt="" width={120} height={48} className="h-8 w-auto" />
+            <span className="text-sm font-semibold text-slate-600">Exemple d’écran</span>
           </div>
+          <h2 className="mt-5 text-xl font-bold">À faire aujourd&apos;hui</h2>
+          <article className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="font-bold">Client Exemple</p>
+            <p className="mt-1 text-sm text-slate-700">Solde dû : 75 000 FCFA</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <span className="rounded-full bg-amber-100 px-3 py-1 font-semibold text-amber-900">Risque moyen</span>
+              <span className="text-slate-700">WhatsApp</span>
+            </div>
+            <button type="button" className="mt-4 min-h-12 w-full rounded-xl bg-blue-900 px-4 font-bold text-white">Préparer une relance</button>
+          </article>
+          <p className="mt-3 text-xs text-slate-600">Données fictives à titre d’illustration.</p>
         </div>
       </section>
 
-      <section id="avantages" className="bg-[#123274] py-20 text-white">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-200">Pourquoi NowPay</p>
-            <h2 className="mt-4 text-3xl font-black md:text-4xl">Une plateforme pensée pour accélérer le recouvrement</h2>
-          </div>
-
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {features.map((feature) => (
-              <div key={feature.title} className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FFD100] text-lg font-black text-[#123274]">
-                  ✦
-                </div>
-                <h3 className="text-xl font-bold">{feature.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-blue-100">{feature.text}</p>
-              </div>
+      <section id="fonctionnement" className="scroll-mt-6 bg-blue-950 py-14 text-white sm:py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <h2 className="max-w-2xl text-3xl font-black sm:text-4xl">Le suivi des créances, à portée de téléphone</h2>
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {steps.map(([title, text], index) => (
+              <article key={title} className="rounded-2xl border border-white/20 bg-white/5 p-5">
+                <p className="text-sm font-bold text-yellow-300">Étape {index + 1}</p>
+                <h3 className="mt-2 text-xl font-bold">{title}</h3>
+                <p className="mt-2 leading-7 text-blue-100">{text}</p>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="fonctionnalites" className="mx-auto max-w-7xl px-6 py-20">
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#123274]">Workflow</p>
-            <h3 className="mt-4 text-3xl font-black tracking-tight text-slate-900">Plus de contrôle, moins de friction</h3>
-            <div className="mt-8 space-y-5">
-              {[
-                'Importez vos dossiers et clients en quelques clics.',
-                'L’IA identifie les opérations à risque et les priorise automatiquement.',
-                'Les actions de relance et le suivi sont centralisés dans un seul espace.',
-              ].map((item, index) => (
-                <div key={item} className="flex gap-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#123274] text-sm font-bold text-white">
-                    {index + 1}
-                  </div>
-                  <p className="pt-1 text-slate-700">{item}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[2rem] bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-white shadow-xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Impact business</p>
-            <h3 className="mt-4 text-3xl font-black">Des résultats visibles dès les premières semaines</h3>
-
-            <div className="mt-8 space-y-5">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-300">Temps de traitement</span>
-                  <span className="text-2xl font-black text-[#FFD100]">-40%</span>
-                </div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-300">Taux de relance</span>
-                  <span className="text-2xl font-black text-[#FFD100]">+32%</span>
-                </div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-300">Productivité équipe</span>
-                  <span className="text-2xl font-black text-[#FFD100]">+2.5x</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="contact" className="bg-slate-100 py-20">
-        <div className="mx-auto max-w-5xl rounded-[2rem] border border-slate-200 bg-white px-6 py-12 shadow-sm md:px-10">
-          <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#123274]">Prêt à lancer</p>
-              <h3 className="mt-3 text-3xl font-black tracking-tight text-slate-900">Commencez à tester NowPay dès aujourd’hui</h3>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/signup"
-                className="rounded-full bg-[#123274] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#123274]/20 transition hover:bg-[#0f2d67]"
-              >
-                Tester l’outil
-              </Link>
-              <Link
-                href="/dashboard"
-                className="rounded-full border border-slate-300 bg-slate-50 px-6 py-3 text-sm font-bold text-slate-800 transition hover:border-[#123274] hover:text-[#123274]"
-              >
-                Accéder au dashboard
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <footer className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <span>NowPay</span>
+        <nav aria-label="Informations légales" className="flex flex-wrap gap-x-5 gap-y-2">
+          <Link href="/mentions-legales" className="underline">Mentions légales</Link>
+          <Link href="/confidentialite" className="underline">Confidentialité</Link>
+          <Link href="/conditions-utilisation" className="underline">Conditions d’utilisation</Link>
+        </nav>
+      </footer>
     </main>
   )
 }

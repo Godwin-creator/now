@@ -11,10 +11,14 @@ describe('validation de l’inscription', () => {
       signUpSchema.parse({
         email: ' gerant@example.com ',
         password: 'secure123',
+        legalAccepted: true,
+        thirdPartyDataRightsConfirmed: true,
       }),
     ).toEqual({
       email: 'gerant@example.com',
       password: 'secure123',
+        legalAccepted: true,
+        thirdPartyDataRightsConfirmed: true,
     });
   });
 

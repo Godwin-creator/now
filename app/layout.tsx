@@ -4,16 +4,15 @@ import BackToTop from '@/app/components/BackToTop'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.nowpay.website'),
-  title: 'NowPay | Recouvrement intelligent',
-  description:
-    'Solution de gestion et de relance automatisée de créances par IA pour les entreprises en Afrique.',
+  title: { default: 'NowPay — suivi des créances', template: '%s | NowPay' },
+  description: "Voyez qui relancer aujourd'hui, préparez le bon message et gardez la main sur son envoi.",
+  applicationName: 'NowPay',
   verification: {
     google: '_NaZnXQLJJ3WV9ZIJDGF2CoShmVXxyTOV9s7nkBQh9U',
   },
   openGraph: {
-    title: 'NowPay | Recouvrement intelligent',
-    description:
-      'Solution de gestion et de relance automatisée de créances par IA pour les entreprises en Afrique.',
+    title: 'NowPay — suivi des créances',
+    description: "Voyez qui relancer aujourd'hui et préparez vos messages de relance.",
     url: '/',
     siteName: 'NowPay',
     locale: 'fr_FR',
@@ -29,13 +28,12 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'NowPay | Recouvrement intelligent',
-    description:
-      'Solution de gestion et de relance automatisée de créances par IA pour les entreprises en Afrique.',
+    title: 'NowPay — suivi des créances',
+    description: "Voyez qui relancer aujourd'hui et préparez vos messages de relance.",
     images: ['/logo-nowpay.png'],
   },
   icons: {
-    icon: '/logo-nowpay2.png',
+    icon: '/logo-nowpay.png',
     apple: '/logo-nowpay.png',
   },
 }
