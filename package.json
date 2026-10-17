@@ -18,6 +18,8 @@
     "@ai-sdk/google": "^4.0.99",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "ai": "^7.0.143",
     "lucide-react": "^1.47.0",
     "next": "^16.4.2",

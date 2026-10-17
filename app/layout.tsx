@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 import BackToTop from '@/app/components/BackToTop'
 
@@ -48,6 +50,8 @@ export default function RootLayout({
       <body className="antialiased min-h-screen bg-now-bg text-slate-900">
         {children}
         <BackToTop />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
