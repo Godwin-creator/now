@@ -117,17 +117,20 @@ aux paramètres authentifiés où le gérant peut couper l’interrupteur.
 
 L’origine canonique de NowPay est `https://www.nowpay.website`. Les pages
 publiques déclarent leur URL canonique et leurs métadonnées Open Graph. Le
-proxy Next.js redirige en 308 les requêtes reçues sur
-`now-one-sigma.vercel.app` vers le même chemin sur le domaine canonique.
+proxy Next.js redirige en 301 les requêtes reçues sur
+`now-one-sigma.vercel.app` vers le même chemin sur le domaine canonique, sans
+ajouter de directive `noindex`. Il redirige aussi l’apex `nowpay.website` vers
+`www.nowpay.website`, en conservant le chemin et les paramètres.
 
 Pour que cette redirection s’applique, conserver `now-one-sigma.vercel.app`
 comme domaine attaché au même projet Vercel que l’application. Dans **Project
 Settings → Domains**, vérifier aussi que `www.nowpay.website` est le domaine
 principal. Une redirection de domaine Vercel vers le domaine principal peut
 être définie comme règle de plateforme; elle est préférable si le domaine
-alias est déplacé vers un autre projet. Vérifier les deux hôtes après chaque
-changement de domaine avec une requête HTTP et confirmer le statut 308 et
-l’URL de destination.
+alias est déplacé vers un autre projet. Attacher également `nowpay.website` au
+projet et le garder comme alias du domaine principal `www.nowpay.website`.
+Vérifier les deux hôtes après chaque changement de domaine avec un chemin et
+des paramètres de requête, et confirmer le statut 301 et l’URL de destination.
 
 Le plan d’hébergement doit être vérifié pour l’usage commercial envisagé :
 Vercel Hobby est destiné à un usage personnel/non commercial. Voir les

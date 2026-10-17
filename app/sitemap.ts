@@ -1,12 +1,11 @@
-import { MetadataRoute } from 'next';
+import type { MetadataRoute } from 'next';
+import { publicRoutes } from '@/lib/seo';
+
+const origin = 'https://www.nowpay.website';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  return [
-    {
-      url: 'https://www.nowpay.website',
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 1.0,
-    },
-  ];
+  return publicRoutes.map((path) => ({
+    url: new URL(path, origin).toString(),
+    lastModified: new Date(),
+  }));
 }

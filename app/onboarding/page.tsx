@@ -2,6 +2,11 @@ import { redirect } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
 import { createClient } from '@/utils/supabase/server';
 import CompanyForm from './CompanyForm';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function OnboardingPage() {
   const user = await requireUser();

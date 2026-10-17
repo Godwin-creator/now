@@ -1,0 +1,21 @@
+# NowPay
+
+> NowPay est un outil de suivi et de relance de factures impayées. Ce n'est pas un service d'avance sur salaire, de prêt ni de paiement.
+
+## Ce que fait NowPay
+
+- Suivi des créances et des paiements partiels.
+- Calcul d'un score de risque transparent de 0 à 100.
+- File quotidienne des factures à examiner.
+- Messages de relance proposés par IA, relus par le gérant puis envoyés manuellement.
+- Récapitulatif quotidien optionnel pour le gérant.
+
+## Pour qui
+
+Gérants, comptables et responsables administratifs de PME de services, de commerce et du BTP en Afrique francophone.
+
+## Liens
+
+- [Accueil](https://www.nowpay.website/)
+- [Mentions légales](https://www.nowpay.website/mentions-legales)
+- [Confidentialité](https://www.nowpay.website/confidentialite)

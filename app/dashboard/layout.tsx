@@ -1,6 +1,11 @@
 import { requireCompany } from '@/lib/auth';
+import type { Metadata } from 'next';
 import Sidebar from '@/app/components/Sidebar';
 import { ReactNode } from 'react';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function DashboardLayout({
   children,
