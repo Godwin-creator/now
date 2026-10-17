@@ -2,13 +2,34 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { deleteAccount, exportCreancesCsv } from '@/app/actions/account'
+import { deleteAccount, exportCreancesCsv, updateDigestPreference } from '@/app/actions/account'
 
-export default function AccountSettings({ companyName }: { companyName: string }) {
+export default function AccountSettings({ companyName, digestActive: initialDigestActive, hasDigestEmail }: { companyName: string; digestActive: boolean; hasDigestEmail: boolean }) {
   const [confirmation, setConfirmation] = useState('')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
+  const [digestActive, setDigestActive] = useState(initialDigestActive)
+  const [digestBusy, setDigestBusy] = useState(false)
   const router = useRouter()
+
+  async function handleDigestChange(enabled: boolean) {
+    const previousValue = digestActive
+    setDigestActive(enabled)
+    setDigestBusy(true)
+    setMessage('')
+    try {
+      const result = await updateDigestPreference(enabled)
+      if (!result.ok) {
+        setDigestActive(previousValue)
+        setMessage(result.error.message)
+        return
+      }
+      setMessage(enabled ? 'Le récapitulatif quotidien est activé.' : 'Le récapitulatif quotidien est désactivé.')
+    } catch {
+      setDigestActive(previousValue)
+      setMessage('La préférence est temporairement indisponible.')
+    } finally { setDigestBusy(false) }
+  }
 
   async function handleExport() {
     setBusy(true)
@@ -45,6 +66,20 @@ export default function AccountSettings({ companyName }: { companyName: string }
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
       <header><h1 className="text-3xl font-black text-now-blue">Paramètres</h1><p className="mt-2 text-base text-slate-700">Exportez vos créances ou supprimez votre compte NowPay.</p></header>
+      <section id="digest-preference" className="scroll-mt-5 rounded-2xl border border-now-border bg-white p-5 shadow-sm sm:p-6">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h2 className="text-xl font-bold">Récapitulatif quotidien</h2>
+            <p className="mt-2 text-base leading-6 text-slate-700">Recevoir un e-mail quand des relances sont à faire aujourd’hui.</p>
+          </div>
+          <label htmlFor="digest-active" className="flex min-h-11 shrink-0 cursor-pointer items-center gap-3">
+            <span className="sr-only">Recevoir le récapitulatif quotidien</span>
+            <input id="digest-active" type="checkbox" role="switch" aria-label="Recevoir le récapitulatif quotidien" checked={digestActive} disabled={digestBusy || (!hasDigestEmail && !digestActive)} onChange={(event) => void handleDigestChange(event.target.checked)} className="peer sr-only" />
+            <span aria-hidden="true" className="relative h-7 w-12 rounded-full bg-slate-400 transition-colors after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:bg-blue-900 peer-checked:after:translate-x-5 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-800 peer-disabled:opacity-60 motion-reduce:transition-none" />
+          </label>
+        </div>
+        <p className="mt-3 text-sm text-slate-700">{hasDigestEmail ? 'Envoyé à l’adresse e-mail associée à votre entreprise. Vous pouvez vous désinscrire ici à tout moment.' : 'Aucune adresse e-mail n’est associée à votre entreprise. Le récapitulatif ne peut pas être envoyé.'}</p>
+      </section>
       <section className="rounded-2xl border border-now-border bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-xl font-bold">Exporter vos créances</h2>
         <p className="mt-2 text-base text-slate-700">Téléchargez les créances et les coordonnées associées au format CSV.</p>

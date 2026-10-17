@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default async function ParametresPage() {
   const { user } = await requireCompany()
   const supabase = await createClient()
-  const { data: company, error } = await supabase.from('companies').select('nom').eq('id', user.id).single()
+  const { data: company, error } = await supabase.from('companies').select('nom, email, digest_actif').eq('id', user.id).single()
   if (error || !company) throw new Error('Impossible de charger les paramètres du compte.')
-  return <AccountSettings companyName={company.nom} />
+  return <AccountSettings companyName={company.nom} digestActive={company.digest_actif} hasDigestEmail={Boolean(company.email)} />
 }

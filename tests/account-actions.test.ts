@@ -7,11 +7,12 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('server-only', () => ({}))
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('@/lib/auth', () => ({ requireUser: mocks.requireUser }))
 vi.mock('@/utils/supabase/server', () => ({ createClient: mocks.createClient }))
 vi.mock('@/lib/supabase/admin', () => ({ deleteAuthUser: mocks.deleteAuthUser }))
 
-import { deleteAccount } from '@/app/actions/account'
+import { deleteAccount, updateDigestPreference } from '@/app/actions/account'
 
 afterEach(() => vi.clearAllMocks())
 
@@ -47,5 +48,21 @@ describe('deleteAccount', () => {
 
     expect(mocks.deleteAuthUser).toHaveBeenCalledWith('user-123')
     expect(signOut).toHaveBeenCalledWith({ scope: 'local' })
+  })
+})
+
+describe('updateDigestPreference', () => {
+  it('updates the preference only for the authenticated company', async () => {
+    mocks.requireUser.mockResolvedValue({ id: 'user-123', email: 'owner@example.com' })
+    const maybeSingle = vi.fn().mockResolvedValue({ data: { id: 'user-123' }, error: null })
+    const select = vi.fn(() => ({ maybeSingle }))
+    const eq = vi.fn(() => ({ select }))
+    const update = vi.fn(() => ({ eq }))
+    mocks.createClient.mockResolvedValue({ from: vi.fn(() => ({ update })) })
+
+    await expect(updateDigestPreference(false)).resolves.toEqual({ ok: true, data: null })
+
+    expect(update).toHaveBeenCalledWith({ digest_actif: false })
+    expect(eq).toHaveBeenCalledWith('id', 'user-123')
   })
 })

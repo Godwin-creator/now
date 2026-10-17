@@ -1,11 +1,33 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
+import { z } from 'zod'
 import { requireUser } from '@/lib/auth'
 import { failure, success, type Result } from '@/lib/auth/result'
 import { soldeRestant, statutFacture } from '@/lib/domain'
 import { deleteAccountSchema } from '@/lib/validation/auth'
 import { deleteAuthUser } from '@/lib/supabase/admin'
 import { createClient } from '@/utils/supabase/server'
+
+export async function updateDigestPreference(enabled: boolean): Promise<Result<null>> {
+  const user = await requireUser()
+  const parsed = z.boolean().safeParse(enabled)
+  if (!parsed.success) return failure('VALIDATION', 'Préférence de récapitulatif invalide.')
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('companies')
+      .update({ digest_actif: parsed.data })
+      .eq('id', user.id)
+      .select('id')
+      .maybeSingle()
+    if (error || !data) return failure('DATABASE', 'La préférence n’a pas pu être enregistrée.')
+    revalidatePath('/dashboard/parametres')
+    return success(null)
+  } catch {
+    return failure('UNAVAILABLE', 'La préférence est temporairement indisponible.')
+  }
+}
 
 export async function deleteAccount(confirmation: string): Promise<Result<null>> {
   const user = await requireUser()

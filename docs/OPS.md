@@ -92,6 +92,27 @@ Ne réutilisez pas le mot de passe du compte e-mail. Vérifiez la délivrabilit�
 des e-mails de confirmation et de réinitialisation avant d'ouvrir les
 inscriptions en production.
 
+## Récapitulatif quotidien
+
+L’envoi utilise l’API Resend sans dépendance supplémentaire. Configurez
+`RESEND_API_KEY` et `RESEND_FROM_EMAIL` dans chaque environnement Vercel.
+L’adresse d’expédition doit appartenir à un domaine vérifié dans Resend. La
+valeur `SITE_URL` doit viser l’origine de l’environnement concerné pour que
+les liens du message ouvrent son tableau de bord. Les valeurs restent dans le
+gestionnaire de variables d’environnement et ne sont jamais ajoutées au dépôt.
+
+`vercel.json` planifie `GET /api/cron/digest` avec `0 7 * * *` en UTC.
+Vercel installe les Cron Jobs sur les déploiements de production; les tests
+sur `dev`/Preview se font en invoquant la route manuellement avec
+`Authorization: Bearer <CRON_SECRET>`. La route compare le secret avant de
+créer le client admin. Sur le plan Hobby, Vercel peut exécuter la tâche à
+n’importe quelle minute de l’heure planifiée; le passage à 07:00 pile exige
+un plan qui garantit la minute.
+
+Le récapitulatif est adressé à l’e-mail de l’entreprise. La préférence
+`digest_actif` contrôle l’envoi. Le lien « Désactiver ce récapitulatif » mène
+aux paramètres authentifiés où le gérant peut couper l’interrupteur.
+
 ## Domaine canonique et Vercel
 
 L’origine canonique de NowPay est `https://www.nowpay.website`. Les pages
