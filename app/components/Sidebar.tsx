@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { FileText, PlusCircle, Users, History, LogOut, Menu, X, Settings } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
 
-export default function Sidebar() {
+export default function Sidebar({ companyName }: { companyName: string }) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -72,8 +72,8 @@ export default function Sidebar() {
                 className="h-20 w-auto object-contain drop-shadow-[0_0_16px_rgba(255,192,0,0.3)]"
               />
             </div>
-            <p className="text-white/80 text-xs font-mono mt-3 uppercase tracking-widest">
-              Relance IA SaaS
+            <p className="mt-3 break-words text-sm font-semibold leading-snug text-white/90">
+              {companyName}
             </p>
           </div>
 

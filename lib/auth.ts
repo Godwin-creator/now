@@ -22,7 +22,7 @@ export async function requireCompany() {
   const supabase = await createClient();
   const { data: company, error } = await supabase
     .from('companies')
-    .select('id')
+    .select('id, nom')
     .eq('id', user.id)
     .maybeSingle();
 
