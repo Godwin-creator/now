@@ -34,6 +34,8 @@ export const paymentSchema = z.object({
   date: isoDateSchema,
 })
 
+export const paymentIdSchema = z.string().uuid()
+
 export const clientUpdateSchema = z.object({
   id: z.string().uuid(),
   nom: z.string().trim().min(1).max(150),

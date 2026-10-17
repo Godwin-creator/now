@@ -3,6 +3,7 @@
 import { Fragment } from 'react'
 import { AlertCircle, Mail, MessageCircle, MessageSquare, PhoneCall } from 'lucide-react'
 import type { CreanceEnrichie } from '@/lib/domain'
+import { formatIsoDate } from '@/lib/domain'
 import RelanceActionClient from './RelanceActionClient'
 
 interface DashboardInvoiceTableProps {
@@ -47,7 +48,7 @@ export default function DashboardInvoiceTable({
                 </td>
                 <td className="px-6 py-4 text-right font-semibold tabular-nums text-gray-900">{invoice.solde_restant.toLocaleString('fr-FR')} FCFA</td>
                 <td className="px-6 py-4">
-                  <p className="text-sm text-gray-700">{new Date(`${invoice.date_echeance}T00:00:00Z`).toLocaleDateString('fr-FR', { timeZone: 'UTC' })}</p>
+                  <p className="text-sm text-gray-700">{formatIsoDate(invoice.date_echeance)}</p>
                   {invoice.jours_retard > 0 && !isPaid && <span className="mt-1 inline-block rounded bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-600">{invoice.jours_retard} j de retard</span>}
                 </td>
                 <td className="px-6 py-4">

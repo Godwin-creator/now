@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -170,7 +169,7 @@ export default function LoginPage() {
 
       {/* ── Top Header Navigation ── */}
       <header className="relative z-10 max-w-6xl mx-auto w-full px-6 py-6 flex items-center justify-end">
-        <div className="flex items-center gap-2 text-[10px] font-mono text-[#FFC000] border border-[#FFC000]/40 bg-[#FFC000]/10 px-3 py-1.5 uppercase tracking-widest">
+        <div className="flex min-h-11 items-center gap-2 text-xs font-mono text-[#FFC000] border border-[#FFC000]/40 bg-[#FFC000]/10 px-3 py-1.5 uppercase tracking-widest">
           <ShieldCheck size={12} className="text-[#FFC000]" />
           <span>Portail Sécurisé</span>
         </div>
@@ -179,20 +178,7 @@ export default function LoginPage() {
       {/* ── Centre : Carte de Connexion / Inscription ── */}
       <main className="relative z-10 max-w-lg w-full mx-auto px-4 py-6 flex flex-col justify-center">
         {/* ── Grand Logo en Filigrane (Watermark animé en arrière-plan) ── */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.85, rotate: -4 }}
-          animate={{
-            opacity: [0.04, 0.08, 0.05, 0.04],
-            scale: [1, 1.5, 1.3, 1],
-            rotate: [0, 1.5, -1.5, 0],
-            y: [0, -10, 6, 0],
-          }}
-          transition={{
-            opacity: { duration: 8, repeat: Infinity, ease: 'easeInOut' },
-            scale: { duration: 12, repeat: Infinity, ease: 'easeInOut' },
-            rotate: { duration: 16, repeat: Infinity, ease: 'easeInOut' },
-            y: { duration: 10, repeat: Infinity, ease: 'easeInOut' },
-          }}
+        <div
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[460px] sm:w-[600px] pointer-events-none z-0 select-none overflow-visible"
         >
           <Image
@@ -203,34 +189,11 @@ export default function LoginPage() {
             priority
             className="w-full h-auto object-contain filter drop-shadow-[0_0_90px_rgba(255,192,0,0.2)] brightness-125"
           />
-        </motion.div>
+        </div>
 
         {/* En-tête de marque + Typewriter */}
         <div className="relative z-10 text-center mb-6 space-y-2">
-          {/* Badge logo compact animé */}
-          {/* <motion.div
-            initial={{ opacity: 0, scale: 0.7, y: -12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="flex justify-center mb-2"
-          >
-            <div className="relative group p-2 bg-[#15274D]/40 border border-[#FFC000]/40 backdrop-blur-sm shadow-lg">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#15274D] to-[#FFC000] opacity-0 group-hover:opacity-20 transition-opacity" />
-              <Image
-                src="/logo-nowpay2.png"
-                alt="NowPay Logo"
-                width={48}
-                height={48}
-                className="w-10 h-10 sm:w-11 sm:h-11 object-contain"
-                priority
-              />
-            </div>
-          </motion.div> */}
-
-          <motion.div
-            initial={{ opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
+          <div
             className="flex justify-center"
           >
             <Image
@@ -241,7 +204,7 @@ export default function LoginPage() {
               priority
               className="h-20 w-auto object-contain sm:h-24"
             />
-          </motion.div>
+          </div>
 
           {/* Animation Typewriter dynamique */}
           <div className="h-6 flex items-center justify-center">
@@ -253,10 +216,7 @@ export default function LoginPage() {
         </div>
 
         {/* Conteneur Sharp Brutal */}
-        <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+        <div
           className="bg-white text-gray-900 border-2 border-[#FFC000] shadow-2xl relative overflow-hidden"
         >
           {/* Accent top gradient bar */}
@@ -270,10 +230,7 @@ export default function LoginPage() {
             >
               <LogIn size={14} className="text-[#15274D]" />
               <span>Connexion</span>
-              <motion.div
-                layoutId="auth-tab"
-                className="absolute bottom-0 left-0 right-0 h-1 bg-[#15274D]"
-              />
+              <span aria-hidden="true" className="absolute bottom-0 left-0 right-0 h-1 bg-[#15274D]" />
             </button>
 
             <button
@@ -288,12 +245,8 @@ export default function LoginPage() {
 
           <div className="p-6 sm:p-8 space-y-5">
             {/* Messages alertes */}
-            <AnimatePresence mode="wait">
-              {errorMsg && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
+            {errorMsg && (
+                <div
                   role="alert"
                   className="flex items-start gap-2.5 p-3.5 bg-rose-50 border-l-4 border-rose-500 text-rose-800 text-sm font-bold"
                 >
@@ -302,9 +255,8 @@ export default function LoginPage() {
                     className="shrink-0 mt-0.5 text-rose-600"
                   />
                   <span>{errorMsg}</span>
-                </motion.div>
+                </div>
               )}
-            </AnimatePresence>
 
             <form onSubmit={handleAuth} className="space-y-4">
               {/* Champ Email */}
@@ -390,7 +342,7 @@ export default function LoginPage() {
             </form>
 
             {/* Pied de formulaire */}
-            <div className="pt-4 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500 font-semibold">
+            <div className="pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-700 font-semibold">
               <span>Nouveau sur NowPay ?</span>
               <button
                 type="button"
@@ -402,13 +354,13 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
-        </motion.div>
+        </div>
       </main>
 
       {/* ── Footer Ticker Marquee infini ── */}
       <footer className="relative z-10 border-t border-white/10 bg-black/40 h-8 flex items-center overflow-hidden">
         <div
-          className="flex whitespace-nowrap text-[10px] font-mono text-[#FFC000]/60 tracking-widest gap-0"
+          className="flex whitespace-nowrap text-xs font-mono text-[#FFD100] tracking-widest gap-0"
           style={{ animation: 'marquee 22s linear infinite' }}
         >
           <span className="pr-16">{tickerText}</span>

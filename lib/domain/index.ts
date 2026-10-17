@@ -1,4 +1,4 @@
-export { addDays, daysBetween, isValidIsoDate } from './dates'
+export { addDays, daysBetween, formatIsoDate, isValidIsoDate } from './dates'
 export { canalEffectif } from './canal'
 export type { CanalContact, CanalEffectif, CanalEffectifResult, CoordonneesCanal } from './canal'
 export { formatFcfa, parseFcfa } from './money'

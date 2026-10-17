@@ -55,7 +55,7 @@ export default function SignupPage() {
 
         <div className="px-6 py-5 border-b border-gray-200 flex items-center justify-between gap-3">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-now-blue-light">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-now-blue-light">
               Onboarding
             </p>
             <h1 className="text-xl font-black text-now-blue">
@@ -158,7 +158,7 @@ export default function SignupPage() {
             )}
           </button>
 
-          <div className="flex items-center justify-between border-t border-gray-200 pt-4 text-[11px] font-bold text-gray-600">
+          <div className="flex items-center justify-between border-t border-gray-200 pt-4 text-xs font-bold text-gray-700">
             <span>Vous avez déjà un compte ?</span>
             <Link
               href="/login"

@@ -36,7 +36,7 @@ export async function insertPayment(
   factureId: string,
   montant: number,
   date: string,
-): Promise<Result<null>> {
+): Promise<Result<{ id: string }>> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('paiements')
@@ -44,5 +44,25 @@ export async function insertPayment(
     .select('id')
     .single()
   if (error || !data) return failure('DATABASE', 'Le paiement n’a pas pu être enregistré.')
-  return success(null)
+  return success(data)
+}
+
+export async function deleteRecentPayment(companyId: string, paymentId: string): Promise<Result<null>> {
+  try {
+    const recentEnough = new Date(Date.now() - 10_000).toISOString()
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('paiements')
+      .delete()
+      .eq('id', paymentId)
+      .eq('company_id', companyId)
+      .gte('created_at', recentEnough)
+      .select('id')
+      .maybeSingle()
+    if (error) return failure('DATABASE', 'Le paiement n’a pas pu être annulé.')
+    if (!data) return failure('UNDO_EXPIRED', 'Le délai de 10 secondes pour annuler ce paiement est écoulé.')
+    return success(null)
+  } catch {
+    return failure('DATABASE', 'Le paiement n’a pas pu être annulé.')
+  }
 }

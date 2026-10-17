@@ -4,14 +4,14 @@ import { revalidatePath } from 'next/cache'
 import { requireUser } from '@/lib/auth'
 import { failure, type Result } from '@/lib/auth/result'
 import { soldeRestant, statutFacture } from '@/lib/domain'
-import { getPaymentState, insertPayment } from '@/lib/db/paiements'
-import { paymentSchema } from '@/lib/validation/schemas'
+import { deleteRecentPayment, getPaymentState, insertPayment } from '@/lib/db/paiements'
+import { paymentIdSchema, paymentSchema } from '@/lib/validation/schemas'
 
 export async function enregistrerPaiement(
   factureId: string,
   montant: number,
   date: string,
-): Promise<Result<null>> {
+): Promise<Result<{ id: string }>> {
   const user = await requireUser()
   const parsed = paymentSchema.safeParse({ factureId, montant, date })
   if (!parsed.success) return failure('VALIDATION', 'Le paiement doit avoir un montant positif et une date valide.')
@@ -32,9 +32,26 @@ export async function enregistrerPaiement(
     if (!inserted.ok) return inserted
 
     revalidatePath('/dashboard')
+    revalidatePath('/dashboard/creances')
     revalidatePath('/dashboard/historique')
     return inserted
   } catch {
     return failure('DATABASE', 'Le paiement n’a pas pu être vérifié ou enregistré.')
+  }
+}
+
+export async function annulerPaiement(paymentId: unknown): Promise<Result<null>> {
+  const user = await requireUser()
+  const parsed = paymentIdSchema.safeParse(paymentId)
+  if (!parsed.success) return failure('VALIDATION', 'Identifiant de paiement invalide.')
+  try {
+    const result = await deleteRecentPayment(user.id, parsed.data)
+    if (!result.ok) return result
+    revalidatePath('/dashboard')
+    revalidatePath('/dashboard/creances')
+    revalidatePath('/dashboard/historique')
+    return result
+  } catch {
+    return failure('DATABASE', 'Le paiement n’a pas pu être annulé.')
   }
 }

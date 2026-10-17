@@ -29,7 +29,7 @@
   /* Source de vérité de la palette */
   --color-primary: #123274;
   --color-primary-dark: #0e285e;
-  --color-primary-light: #7c9ac8;
+  --color-primary-light: #52698a;
   --color-accent: #FFD100;
   --color-accent-hover: #e6b800;
   --color-bg: #F5F7FB;
@@ -355,7 +355,6 @@ button,
   position: relative;
   background: #f9fafb;
   border: 1px solid var(--border);
-  outline: none;
   transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
 }
 .input-anim:focus {
@@ -374,6 +373,15 @@ button,
 }
 
 ::selection { background: var(--accent); color: #000; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 4px; }

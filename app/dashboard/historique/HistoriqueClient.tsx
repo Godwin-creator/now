@@ -102,8 +102,8 @@ export default function HistoriqueClient({ initialRelances, initialPaiements }: 
       const matchesStatus = statusFilter === 'Tous' || row.status === statusFilter
 
       const rowDate = new Date(row.date)
-      const hasStart = startDate ? new Date(`${startDate}T00:00:00`) : null
-      const hasEnd = endDate ? new Date(`${endDate}T23:59:59`) : null
+      const hasStart = startDate ? new Date(`${startDate}T00:00:00Z`) : null
+      const hasEnd = endDate ? new Date(`${endDate}T23:59:59Z`) : null
 
       const matchesStart = !hasStart || rowDate >= hasStart
       const matchesEnd = !hasEnd || rowDate <= hasEnd
@@ -129,29 +129,31 @@ export default function HistoriqueClient({ initialRelances, initialPaiements }: 
       <div className="bg-now-surface border border-slate-200 shadow-sm rounded-xl p-4">
         <div className="grid grid-cols-1 xl:grid-cols-[1.4fr_0.8fr_1fr_1fr_0.7fr_auto] gap-3 items-end">
           <div className="relative">
-            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-now-blue-light">
+            <label htmlFor="history-search" className="mb-1.5 block text-sm font-semibold text-slate-800">
               Recherche
             </label>
             <div className="relative">
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
+                id="history-search"
                 type="text"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Nom du client"
-                className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-now-blue focus:outline-none focus:ring-2 focus:ring-now-blue/10"
+                className="min-h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-now-blue focus:ring-2 focus:ring-now-blue/10"
               />
             </div>
           </div>
 
           <div>
-            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-now-blue-light">
+            <label htmlFor="history-action" className="mb-1.5 block text-sm font-semibold text-slate-800">
               Action
             </label>
             <select
+              id="history-action"
               value={actionFilter}
               onChange={(event) => setActionFilter(actionFilterValue(event.target.value))}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-now-blue focus:outline-none focus:ring-2 focus:ring-now-blue/10"
+              className="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-now-blue focus:ring-2 focus:ring-now-blue/10"
             >
               {actionOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -162,37 +164,40 @@ export default function HistoriqueClient({ initialRelances, initialPaiements }: 
           </div>
 
           <div>
-            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-now-blue-light">
+            <label htmlFor="history-start" className="mb-1.5 block text-sm font-semibold text-slate-800">
               Début
             </label>
             <input
+              id="history-start"
               type="date"
               value={startDate}
               onChange={(event) => setStartDate(event.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-now-blue focus:outline-none focus:ring-2 focus:ring-now-blue/10"
+              className="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-now-blue focus:ring-2 focus:ring-now-blue/10"
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-now-blue-light">
+            <label htmlFor="history-end" className="mb-1.5 block text-sm font-semibold text-slate-800">
               Fin
             </label>
             <input
+              id="history-end"
               type="date"
               value={endDate}
               onChange={(event) => setEndDate(event.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-now-blue focus:outline-none focus:ring-2 focus:ring-now-blue/10"
+              className="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-now-blue focus:ring-2 focus:ring-now-blue/10"
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-now-blue-light">
+            <label htmlFor="history-status" className="mb-1.5 block text-sm font-semibold text-slate-800">
               Statut
             </label>
             <select
+              id="history-status"
               value={statusFilter}
               onChange={(event) => setStatusFilter(statusFilterValue(event.target.value))}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-now-blue focus:outline-none focus:ring-2 focus:ring-now-blue/10"
+              className="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-now-blue focus:ring-2 focus:ring-now-blue/10"
             >
               {statusOptions.map((option) => (
                 <option key={option} value={option}>

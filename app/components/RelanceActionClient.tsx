@@ -124,6 +124,7 @@ export default function RelanceActionClient({
           <Send size={16} />{loading ? 'Génération…' : result ? 'Régénérer' : 'Générer la relance'}
         </button>
       </div>
+      {!whatsapp && !telephone && !email && <div className="border-l-4 border-amber-500 bg-amber-50 p-3 text-sm text-amber-950"><p>Aucune coordonnée n’est renseignée. Ajoutez un numéro ou une adresse e-mail, ou choisissez un autre client.</p><a className="mt-2 inline-flex min-h-11 items-center font-bold underline" href="/dashboard/clients">Voir les clients</a></div>}
 
       {result && (
         <div className="space-y-3 border border-slate-200 bg-white p-3">
@@ -134,9 +135,9 @@ export default function RelanceActionClient({
           <label htmlFor={`relance-${factureId}`} className="sr-only">Message de relance</label>
           <textarea id={`relance-${factureId}`} value={message} onChange={(event) => setMessage(event.target.value)} rows={7} className="w-full resize-y border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-900" />
           <div className="flex flex-wrap gap-2">
-            {whatsapp && <a target="_blank" rel="noreferrer" href={`https://wa.me/${whatsapp}?text=${encodedMessage}`} className="inline-flex min-h-11 items-center gap-2 bg-emerald-600 px-3 py-2 text-sm font-bold text-white"><MessageCircle size={16} />WhatsApp</a>}
-            {email && <a href={`mailto:${email}?subject=${encodeURIComponent('Rappel de règlement')}&body=${encodedMessage}`} className="inline-flex min-h-11 items-center gap-2 bg-now-blue px-3 py-2 text-sm font-bold text-white"><Mail size={16} />E-mail</a>}
-            {telephone && <a href={`sms:${telephone}?body=${encodedMessage}`} className="inline-flex min-h-11 items-center gap-2 bg-slate-800 px-3 py-2 text-sm font-bold text-white"><MessageSquare size={16} />SMS</a>}
+            {whatsapp && <a target="_blank" rel="noreferrer" href={`https://wa.me/${whatsapp}?text=${encodedMessage}`} className="inline-flex min-h-11 items-center gap-2 bg-emerald-700 px-3 py-2 text-sm font-bold text-white"><MessageCircle size={16} />Ouvrir WhatsApp</a>}
+            {email && <a href={`mailto:${email}?subject=${encodeURIComponent('Rappel de règlement')}&body=${encodedMessage}`} className="inline-flex min-h-11 items-center gap-2 bg-now-blue px-3 py-2 text-sm font-bold text-white"><Mail size={16} />Ouvrir Mail</a>}
+            {telephone && <a href={`sms:${telephone}?body=${encodedMessage}`} className="inline-flex min-h-11 items-center gap-2 bg-slate-800 px-3 py-2 text-sm font-bold text-white"><MessageSquare size={16} />Ouvrir SMS</a>}
             {telephone && <a href={`tel:${telephone}`} className="inline-flex min-h-11 items-center gap-2 bg-amber-400 px-3 py-2 text-sm font-bold text-slate-900"><PhoneCall size={16} />Appeler</a>}
           </div>
           <div className="flex flex-wrap gap-2 border-t border-slate-200 pt-3">

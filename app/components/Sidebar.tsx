@@ -4,7 +4,6 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion, AnimatePresence } from 'framer-motion'
 import { FileText, PlusCircle, Users, History, LogOut, Menu, X } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
 
@@ -13,7 +12,8 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
 
   const tabs = [
-    { name: 'Créances', href: '/dashboard', icon: <FileText size={18} /> },
+    { name: 'À faire aujourd’hui', href: '/dashboard', icon: <FileText size={18} /> },
+    { name: 'Toutes les créances', href: '/dashboard/creances', icon: <FileText size={18} /> },
     { name: 'Nouveau', href: '/dashboard/nouveau', icon: <PlusCircle size={18} /> },
     { name: 'Clients', href: '/dashboard/clients', icon: <Users size={18} /> },
     { name: 'Historique', href: '/dashboard/historique', icon: <History size={18} /> },
@@ -33,17 +33,12 @@ export default function Sidebar() {
       </button>
 
       {/* Mobile Overlay */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+      {isOpen && (
+          <div
             onClick={() => setIsOpen(false)}
-            className="md:hidden fixed inset-0 bg-black/50 z-40"
+            className="md:hidden fixed inset-0 bg-black/50 z-40 transition-opacity motion-reduce:transition-none"
           />
         )}
-      </AnimatePresence>
 
       {/* Sidebar */}
       <aside className={`
@@ -76,7 +71,7 @@ export default function Sidebar() {
                 className="h-20 w-auto object-contain drop-shadow-[0_0_16px_rgba(255,192,0,0.3)]"
               />
             </div>
-            <p className="text-white/80 text-[10px] font-mono mt-3 uppercase tracking-widest">
+            <p className="text-white/80 text-xs font-mono mt-3 uppercase tracking-widest">
               Relance IA SaaS
             </p>
           </div>

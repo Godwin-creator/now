@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import type { Client } from '@/types'
+import type { Client, Facture } from '@/types'
 import ClientsTable from './ClientsTable'
 
 export default async function ClientsPage() {
@@ -12,10 +12,13 @@ export default async function ClientsPage() {
   }
 
   let clients: Client[] = []
+  let factures: Facture[] = []
 
   try {
     const clientsRes = await supabase.from('clients').select('*').order('nom', { ascending: true })
     clients = clientsRes.data || []
+    const facturesRes = await supabase.from('factures').select('*').eq('company_id', user.id).order('date_echeance', { ascending: false })
+    factures = facturesRes.data || []
   } catch (error) {
     console.error('Erreur chargement clients:', error)
   }
@@ -29,7 +32,7 @@ export default async function ClientsPage() {
         </div>
       </div>
 
-      <ClientsTable initialClients={clients} />
+      <ClientsTable initialClients={clients} factures={factures} />
     </div>
   )
 }

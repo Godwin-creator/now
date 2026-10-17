@@ -22,6 +22,16 @@ export function isValidIsoDate(value: string): boolean {
   return utcDay(value) !== null
 }
 
+export function formatIsoDate(value: string): string {
+  if (!isValidIsoDate(value)) throw new RangeError('Date ISO invalide.')
+  const parts = value.split('-').map(Number)
+  const year = parts[0] ?? 0
+  const month = parts[1] ?? 1
+  const day = parts[2] ?? 1
+  return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long', timeZone: 'UTC' })
+    .format(new Date(Date.UTC(year, month - 1, day)))
+}
+
 export function daysBetween(from: string, to: string): number {
   const fromDay = utcDay(from)
   const toDay = utcDay(to)

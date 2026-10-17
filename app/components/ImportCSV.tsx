@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 import { importerCreances } from '@/app/actions/importCsv'
 
@@ -64,31 +63,27 @@ export default function ImportCSV({ onImportSuccess }: ImportCSVProps) {
         type="button"
         onClick={() => fileInputRef.current?.click()}
         disabled={loading}
-        className="btn-sweep inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold border border-gray-300 bg-white text-gray-700 hover:text-black hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer select-none"
+        className="btn-sweep inline-flex min-h-11 items-center gap-2 border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-800 shadow-sm transition-colors hover:border-gray-500 hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
         title="Importer plusieurs créances via un fichier CSV"
       >
         {loading ? (
           <>
-            <Loader2 size={13} className="animate-spin text-[#15274D]" />
+            <Loader2 size={16} className="animate-spin text-[#15274D]" />
             <span>Import en cours…</span>
           </>
         ) : (
           <>
-            <FileSpreadsheet size={13} className="text-[#15274D]" />
+            <FileSpreadsheet size={16} className="text-[#15274D]" />
             <span>Importer CSV</span>
-            <Upload size={11} className="text-[#FFC000] ml-0.5" />
+            <Upload size={14} className="text-[#806900] ml-0.5" />
           </>
         )}
       </button>
 
       {/* Message feedback flottant / toast */}
-      <AnimatePresence>
-        {message && (
-          <motion.div
-            initial={{ opacity: 0, y: 5, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 5, scale: 0.95 }}
-            className={`absolute top-full mt-1.5 right-0 z-50 p-2.5 shadow-lg border-l-4 text-xs font-bold whitespace-nowrap flex items-center gap-2 ${
+      {message && (
+          <div role={message.type === 'error' ? 'alert' : 'status'} aria-live="polite"
+            className={`absolute right-0 top-full z-50 mt-1.5 flex max-w-[min(92vw,24rem)] items-start gap-2 border-l-4 p-3 text-sm font-bold shadow-lg ${
               message.type === 'success'
                 ? 'bg-emerald-50 text-emerald-900 border-emerald-500'
                 : 'bg-rose-50 text-rose-900 border-rose-500'
@@ -103,13 +98,12 @@ export default function ImportCSV({ onImportSuccess }: ImportCSVProps) {
             <button
               type="button"
               onClick={() => setMessage(null)}
-              className="ml-2 text-[10px] uppercase font-mono opacity-60 hover:opacity-100 underline"
+              className="ml-auto inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center text-sm underline opacity-80 hover:opacity-100"
             >
               ×
             </button>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </div>
   )
 }

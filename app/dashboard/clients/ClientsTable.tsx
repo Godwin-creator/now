@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { Eye, MessageCircle, PencilLine, Phone, Search } from 'lucide-react'
-import type { Client } from '@/types'
+import type { Client, Facture } from '@/types'
 import ClientDetailsPanel from './ClientDetailsPanel'
 
 const profileStyles: Record<string, string> = {
@@ -22,9 +22,10 @@ const formatProfile = (profil?: string) => {
 
 interface ClientsTableProps {
   initialClients: Client[]
+  factures: Facture[]
 }
 
-export default function ClientsTable({ initialClients }: ClientsTableProps) {
+export default function ClientsTable({ initialClients, factures }: ClientsTableProps) {
   const [query, setQuery] = useState('')
   const [clients, setClients] = useState(initialClients)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
@@ -59,23 +60,33 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
 
   return (
     <>
-      <div className="flex-1 overflow-hidden flex flex-col">
+      <div className="min-w-0 flex-1 flex flex-col">
         <div className="bg-now-surface rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-200 bg-now-surface">
             <div className="relative w-full max-w-md">
+              <label htmlFor="clients-search" className="sr-only">Rechercher un client</label>
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-now-blue" />
               <input
-                type="text"
+                id="clients-search"
+                type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Rechercher un client..."
-                className="w-full bg-now-bg border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-now-blue placeholder:text-now-blue-light focus:outline-none focus:ring-2 focus:ring-now-yellow/40"
+                className="min-h-11 w-full bg-now-bg border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-now-blue placeholder:text-slate-600 focus:ring-2 focus:ring-now-yellow/40"
               />
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[1100px]">
+          <div className="divide-y divide-slate-200 md:hidden">
+            {filteredClients.map((client) => <article key={client.id} className="space-y-3 p-4">
+              <header className="flex items-start justify-between gap-3"><div className="min-w-0"><h2 className="break-words text-base font-bold text-now-blue">{client.nom}</h2><p className="mt-1 break-all text-sm text-slate-700">{client.telephone || client.whatsapp || client.email || 'Coordonnée manquante'}</p></div><span className={`shrink-0 border px-2 py-1 text-xs font-semibold ${profileStyles[client.profil] || 'border-slate-200 bg-slate-100 text-slate-700'}`}>{formatProfile(client.profil)}</span></header>
+              <p className="text-sm text-slate-600">{client.secteur || 'Secteur non renseigné'} · {factures.filter((facture) => facture.client_id === client.id).length} créance(s)</p>
+              <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => setSelectedClient(client)} className="min-h-11 border border-slate-300 px-3 py-2 text-sm font-semibold text-now-blue">Voir le détail</button><button type="button" onClick={() => setEditingClient(client)} className="min-h-11 border border-slate-300 px-3 py-2 text-sm font-semibold text-now-blue">Modifier</button></div>
+            </article>)}
+            {filteredClients.length === 0 && <p className="p-5 text-center text-sm text-slate-600">Aucun client trouvé.</p>}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full text-left">
               <thead>
                 <tr>
                   <th className="px-4 pb-4 pt-4 text-xs text-now-blue-light uppercase tracking-wider font-semibold border-b border-slate-200">Nom du client</th>
@@ -131,7 +142,7 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
                           <button
                             type="button"
                             onClick={() => setSelectedClient(client)}
-                            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-now-blue hover:border-now-blue/30 hover:bg-now-yellow/10 transition-colors"
+                            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-semibold text-now-blue hover:border-now-blue/30 hover:bg-now-yellow/10 transition-colors"
                           >
                             <Eye className="h-3.5 w-3.5" />
                             Voir profil
@@ -141,7 +152,7 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
                             type="button"
                             aria-label={`Modifier ${client.nom}`}
                             onClick={() => setEditingClient(client)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-now-blue hover:bg-slate-100 transition-colors"
+                            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:text-now-blue hover:bg-slate-100 transition-colors"
                           >
                             <PencilLine className="h-3.5 w-3.5" />
                           </button>
@@ -163,6 +174,7 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
         onStartEditing={setEditingClient}
         onEditingChange={setEditingClient}
         onSaved={handleClientSaved}
+        factures={factures.filter((facture) => facture.client_id === selectedClient?.id)}
       />
     </>
   )

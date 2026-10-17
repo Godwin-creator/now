@@ -6,6 +6,7 @@ import {
   countRetardsPrecedents,
   daysBetween,
   enrichirCreances,
+  formatIsoDate,
   formatFcfa,
   isValidIsoDate,
   parseFcfa,
@@ -53,6 +54,9 @@ describe('dates UTC', () => {
 
   it.each(['2026-02-28', '2024-02-29'])('accepte la date valide %s', (date) => {
     expect(isValidIsoDate(date)).toBe(true)
+  })
+  it('affiche une date ISO en français sans décalage de fuseau', () => {
+    expect(formatIsoDate('2026-10-17')).toBe('17 octobre 2026')
   })
   it.each(['2026-02-29', '2026-13-01', '16/10/2026', '2026-1-01'])('rejette la date invalide %s', (date) => {
     expect(isValidIsoDate(date)).toBe(false)
