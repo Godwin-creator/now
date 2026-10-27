@@ -81,7 +81,7 @@ Tâches :
    adapte uniquement les imports nécessaires).
 5. Ne modifie PAS encore la logique des Server Actions au-delà de ce qui est nécessaire pour compiler
    (la refonte arrive en P2/P3). Si une action écrit encore score_risque, retire ce champ de l'écriture.
-6. Documente dans docs/SUPABASE.md : projets dev/prod, procédure de migration (`supabase db push`),
+6. Documente dans docs/OPS.md : projets dev/prod, procédure de migration (`supabase db push`),
    et les réglages Auth à faire dans le dashboard (confirmation e-mail activée, mot de passe ≥ 8
    caractères, URLs de redirection, SMTP personnalisé : liste exacte des champs à remplir).
 
@@ -205,7 +205,7 @@ parcours « créer une créance → relancer → marquer envoyée → enregistre
    mobile (la navigation est actuellement `hidden md:flex`).
 2. Une seule marque : « NowPay » partout (titres, métadonnées, e-mails, logo). Canonical = https://www.nowpay.website ;
    ajoute les balises canonical et OG ; redirige le domaine `now-one-sigma.vercel.app` vers le canonique
-   (configuration Vercel à documenter dans docs/SUPABASE.md → renomme-le docs/OPS.md) ou à défaut
+   (configuration Vercel à documenter dans docs/OPS.md) ou à défaut
    `noindex`.
 3. Pages `/mentions-legales` et `/confidentialite` : rédige un premier texte clair en français (données
    collectées : compte du gérant, coordonnées des débiteurs saisies par le gérant ; finalités ; sous-traitants :
@@ -215,8 +215,17 @@ parcours « créer une créance → relancer → marquer envoyée → enregistre
    les coordonnées de ses clients.
 5. Suppression de compte : bouton dans les paramètres → supprime l'entreprise et toutes ses données en
    cascade (action serveur + confirmation par saisie du nom), puis déconnecte. Export CSV des créances.
+6. Ajoute « Continuer avec Google » comme méthode facultative de connexion et de création de compte,
+   en complément de l’e-mail et du mot de passe. Utilise Supabase Auth OAuth et le callback existant ;
+   après authentification, dirige un nouvel utilisateur vers `/onboarding` et un utilisateur ayant
+   déjà une entreprise vers le dashboard. Le parcours Google ne demande pas le code OTP e-mail ;
+   conserve l’OTP pour les inscriptions par e-mail. Configure les URL de redirection autorisées dans
+   les projets Supabase et documente les réglages Google Cloud/Supabase à faire manuellement, sans
+   écrire ni exposer de secret dans le dépôt. Vérifie le rapprochement d’identité avec un compte e-mail
+   existant de même adresse vérifiée et affiche les erreurs d’annulation ou d’échec en français.
 
-Critères : aucune affirmation inexacte sur la landing ; une seule marque ; suppression de compte testée sur `dev`.
+Critères : aucune affirmation inexacte sur la landing ; une seule marque ; suppression de compte testée sur `dev` ;
+connexion Google, premier onboarding et retour d’un compte existant vérifiés sur `dev`.
 ```
 
 ## P6 — Récapitulatif quotidien

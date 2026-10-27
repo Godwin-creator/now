@@ -21,6 +21,7 @@
 | D-10 | Confirmation de l’inscription par code à 8 chiffres envoyé par e-mail (`verifyOtp`, type `signup`) ; le gabarit « Confirm signup » affiche le code, sans lien de confirmation | Godwin |
 | D-11 | L’entreprise est créée après authentification, sur `/onboarding`, par une action idempotente liée à `user.id`. La policy RLS n’est pas assouplie | Godwin |
 | D-12 | SMTP personnalisé requis pour les e-mails Auth en production ; Google OAuth reste une option à évaluer en P5 | Godwin |
+| D-13 | Ajouter Google OAuth en P5, en complément de l’e-mail et du mot de passe. Le parcours Google évite l’OTP d’inscription par e-mail ; l’onboarding reste commun après authentification | Godwin |
 
 ## 2. Contexte produit (rappel)
 
@@ -225,7 +226,7 @@ Chaque phase = une branche courte + une preview Vercel + critères d'acceptation
 | **P2 — Domaine pur** | `lib/domain` : scoring, timing, canal effectif, argent, dates, statut dérivé de facture, récidive ; tests | ~3 h | Couverture ≥ 90 % sur `lib/domain` ; cas limites testés (0 j, 90 j, > 90 j, paiement partiel, solde nul, coordonnée manquante) ; plus de scoring dupliqué |
 | **P3 — Actions et IA** | Server Actions minces (auth → zod → domaine → repo), `getUser` partout dont OCR, quotas `ai_usage`, `lib/ai` (sortie validée, repli templates, timeouts), `updateClient`, paiement partiel, statuts de relance, `error.tsx` / `loading.tsx` | ~4 h | Aucune action sans `requireUser` ; OCR et IA refusent un appel anonyme et au-delà du quota ; une panne Gemini donne un template étiqueté ; tests des actions (mocks) verts |
 | **P4 — UX mobile** | File « À faire aujourd'hui », cartes mobiles, formulaire 6 champs, CTA relance visible, cibles 44 px, a11y, filtres CDC, KPI corrigés, accents, remplacement de `framer-motion` par des transitions CSS | ~5 h | Testé à 390 px de large sur un vrai téléphone ; créance créée en < 30 s ; relance envoyée en < 1 min ; aucun scroll horizontal ; Lighthouse accessibilité ≥ 95 |
-| **P5 — Marque et légal** | Landing honnête et recentrée, redirections de domaine, mentions légales, confidentialité, suppression de compte, vérification hébergement ; Google OAuth en option | ~2 h | Plus aucun chiffre non sourcé ; une seule marque ; suppression de compte fonctionnelle |
+| **P5 — Marque et légal** | Landing honnête et recentrée, redirections de domaine, mentions légales, confidentialité, suppression de compte, vérification hébergement ; Google OAuth en complément de l’e-mail et du mot de passe | ~2 h | Plus aucun chiffre non sourcé ; une seule marque ; suppression de compte fonctionnelle ; connexion Google et onboarding vérifiés |
 | **P6 — Récapitulatif quotidien** | Cron Vercel (07:00 UTC = 07:00 Lomé), e-mail via SMTP / Resend, accès `service_role` isolé dans `lib/supabase/admin.ts` (`server-only`), opt-in / opt-out | ~2 h | E-mail reçu avec la liste du jour ; route protégée par `CRON_SECRET` ; aucune autre utilisation de `service_role` |
 | **P7 — Pilote** | 3 à 5 gérants réels, observation de leur première session, journal des retours | continu | 3 gérants créent 3 créances et envoient 1 relance **sans aide** en < 5 min |
 
@@ -269,3 +270,4 @@ Chaque phase = une branche courte + une preview Vercel + critères d'acceptation
 | 16/10/2026 | D-10 : remplacer le lien d’inscription par un code OTP e-mail à 8 chiffres |
 | 16/10/2026 | D-11 : séparer la création de l’entreprise de l’inscription ; finaliser sur `/onboarding` après authentification |
 | 16/10/2026 | D-12 : configurer un SMTP personnalisé ; garder Google OAuth comme option de P5 |
+| 27/10/2026 | D-13 : ajouter Google OAuth en P5 comme méthode facultative ; l’inscription Google ne demande pas le code OTP e-mail |

@@ -15,6 +15,7 @@ de confirmation : ce flux ne sert qu’à la récupération du compte.
   Prompt utilisé :
 
   > Photorealistic wide photo, 16:9, natural warm daylight. A confident West African small business owner (shopkeeper or tailor, 30s, modern and dignified) at a counter in a tidy shop, looking at a smartphone held in one hand, a notebook with handwritten invoices and a pen on the counter. Shallow depth of field, soft background blur. Composition: the person on the RIGHT third of the frame, the LEFT half calm and uncluttered (space for text overlay). Colour palette: deep navy blue and warm yellow accents in the clothing or objects. The phone screen is turned slightly away or not readable. No text, no logos, no brand names, no watermark, natural hands, no distortion.
+
 - Les téléphones de la section « Comment ça marche » sont rendus en HTML et CSS. Ils ne reposent sur aucune image.
 
 ## Projets et environnement
@@ -69,6 +70,83 @@ Dans **Authentication → URL Configuration** :
   `/auth/callback` est réservé à l'échange de code OAuth (par exemple Google) ;
   l'inscription e-mail utilise un code à 6 chiffres et ne dépend pas de cette
   route.
+
+## Connexion Google (OAuth)
+
+La configuration se fait d'abord sur le projet Supabase `dev`, puis séparément
+sur `prod`. L'application lance OAuth depuis l'origine courante et revient sur
+`/auth/callback`; Supabase n'acceptera que les URL de redirection autorisées.
+
+### 1. Créer le client OAuth Google
+
+Dans Google Cloud Console, sélectionnez ou créez un projet, puis ouvrez
+**Google Auth Platform** :
+
+1. Dans **Branding**, indiquez `NowPay`, l'adresse e-mail d'assistance et le
+   domaine `nowpay.website`, la page d'accueil `https://www.nowpay.website`,
+   la politique de confidentialité `https://www.nowpay.website/confidentialite`
+   et les conditions `https://www.nowpay.website/cgu`. Pour le pilote public,
+   choisissez l'audience **External**. Tant que l'application reste en mode
+   test, ajoutez les comptes Google des testeurs dans **Audience → Test users**.
+2. Dans **Data Access**, gardez les seules informations de connexion requises :
+   `openid`, `email` et `profile`. N'ajoutez pas de scopes Google Drive, Gmail
+   ou autres API.
+3. Dans **Clients**, créez un identifiant OAuth de type **Web application**.
+   Pour **Authorized JavaScript origins**, ajoutez les origines de l'application
+   que vous testez, par exemple `http://localhost:3000`,
+   `https://www.nowpay.website` et l'origine exacte de la preview Vercel `dev`.
+4. Dans **Authorized redirect URIs**, ajoutez la Callback URL affichée par le
+   fournisseur Google du projet Supabase (étape suivante). Pour deux projets
+   Supabase, ajoutez les deux Callback URLs à Google ou créez un client OAuth
+   distinct par environnement. Préférez un client distinct pour séparer `dev`
+   et `prod`.
+5. Avant l'ouverture publique, passez l'application hors du mode test dans
+   Google Auth Platform et répondez aux éventuelles demandes de vérification
+   du domaine ou de la marque. Les scopes limités à `openid`, `email` et
+   `profile` évitent de demander l'accès aux données d'autres services Google.
+
+### 2. Activer Google dans Supabase
+
+Dans le dashboard du projet Supabase concerné, ouvrez **Authentication → Sign
+In / Providers → Google** :
+
+1. Activez Google et copiez la **Callback URL** indiquée par Supabase dans les
+   Authorized redirect URIs Google. Cette URL est celle de Supabase, au format
+   `https://<project-ref>.supabase.co/auth/v1/callback`; ce n'est pas
+   `/auth/callback` de NowPay.
+2. Collez le **Client ID** et le **Client Secret** du client Google de cet
+   environnement, puis enregistrez.
+3. Ne transmettez pas le Client Secret dans le chat, ne l'ajoutez pas à
+   `.env.example` et ne le commitez pas. Il reste uniquement dans les réglages
+   protégés du fournisseur Supabase.
+
+### 3. Autoriser le retour vers NowPay
+
+Dans **Authentication → URL Configuration** du même projet Supabase :
+
+- Gardez **Site URL** sur l'origine correspondante :
+  `http://localhost:3000` en local, `https://www.nowpay.website` en production.
+- Dans **Redirect URLs**, ajoutez le callback applicatif exact :
+  `http://localhost:3000/auth/callback`,
+  `https://www.nowpay.website/auth/callback` et l'URL exacte de la preview
+  `dev` suivie de `/auth/callback`.
+- N'autorisez pas de wildcard de preview dans le projet `prod`. Si une preview
+  change d'URL, ajoutez sa nouvelle URL exacte au projet `dev`.
+
+### 4. Vérifier le flux
+
+Sur `dev`, testez :
+
+1. Une nouvelle adresse Google : après autorisation, NowPay doit ouvrir
+   `/onboarding`, sans demander le code OTP e-mail.
+2. Une seconde connexion avec ce compte : elle doit ouvrir `/dashboard`.
+3. Une adresse Google qui correspond à un compte e-mail NowPay déjà vérifié :
+   Supabase peut rattacher les identités ayant la même adresse vérifiée ; vérifiez
+   que les données de l'entreprise existante restent accessibles.
+4. L'annulation sur l'écran Google : NowPay doit afficher un message en français
+   et proposer de recommencer.
+
+Ne passez à `prod` qu'après ces vérifications sur `dev`.
 
 Dans **Authentication → Providers → Email** :
 
