@@ -388,3 +388,72 @@ button,
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .landing-hero-copy { animation: landing-enter 420ms ease-out both; }
+  .landing-reveal-pending { opacity: 0; transform: translateY(16px); }
+  .landing-reveal-visible { opacity: 1; transform: translateY(0); transition: opacity 420ms ease, transform 420ms ease; }
+  .landing-reveal { transition: opacity 420ms ease, transform 420ms ease; }
+  .landing-reveal article { transition: transform 200ms ease, box-shadow 200ms ease; }
+  .landing-reveal article:hover { box-shadow: 0 14px 36px rgb(0 0 0 / 18%); transform: translateY(-3px); }
+  .phone-frame { transition: transform 300ms ease; }
+  .phone-mockup:hover .phone-frame-primary { transform: perspective(1200px) rotateY(-7deg) rotateX(2deg) rotate(1deg); }
+  .phone-mockup:hover .phone-frame-secondary { transform: perspective(1200px) rotateY(6deg) rotate(-2deg); }
+  .landing-incentive { animation: landing-enter 300ms ease-out both; }
+}
+
+@keyframes landing-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.landing-hero { max-height: 100svh; }
+.landing-hero-image img { object-position: 70% center; }
+.landing-hero-gradient { background: linear-gradient(180deg, rgb(11 31 77 / 38%) 0%, rgb(11 31 77 / 94%) 38%, #0b1f4d 58%); }
+.landing-hero-copy > div { padding: 1.25rem; background: rgb(11 31 77 / 88%); backdrop-filter: blur(5px); }
+.phone-mockup { position: relative; width: min(100%, 620px); margin-inline: auto; }
+.phone-stack { position: relative; display: flex; justify-content: center; min-height: 660px; padding: 10px 0 24px; }
+.phone-frame { position: absolute; width: min(47%, 292px); aspect-ratio: 9 / 19.5; overflow: hidden; border: 9px solid #111827 !important; border-radius: 36px !important; background: #111827; box-shadow: 0 28px 60px rgb(0 0 0 / 40%), inset 0 0 0 1px #64748b; }
+.phone-frame-primary { z-index: 2; left: 6%; top: 10px; transform: perspective(1200px) rotateY(-12deg) rotateX(4deg) rotate(2deg); }
+.phone-frame-secondary { z-index: 1; left: 30%; top: 40px; transform: perspective(1200px) rotateY(10deg) rotate(-3deg); }
+.phone-island { position: absolute; z-index: 5; left: 50%; top: 7px; width: 32%; height: 17px; transform: translateX(-50%); border-radius: 20px !important; background: #111827; }
+.phone-screen { height: 100%; overflow: hidden; padding: 26px 10px 10px; border-radius: 27px !important; background: #f5f7fb; color: #122033; }
+.phone-screen article { margin-top: 9px; padding: 10px; font-size: 10px; }
+.phone-screen article h3 { font-size: 11px; }
+.phone-screen article .mt-4, .phone-screen article .mt-3 { margin-top: 5px; }
+.phone-screen article button, .phone-screen article a { display: none; }
+.phone-screen article > div:last-child { display: none; }
+.phone-screen article .text-xs { font-size: 9px; }
+.phone-appbar { display: flex; justify-content: space-between; align-items: center; min-height: 28px; border-bottom: 1px solid #dfe6f1; font-size: 12px; }
+.phone-today-title { margin-top: 12px; color: #123274; font-size: 17px; font-weight: 800; }
+.phone-summary, .phone-eyebrow { margin-top: 4px; color: #55657f; font-size: 10px; }
+.phone-message-screen { padding: 30px 16px 14px; }
+.phone-message-screen h3 { margin-top: 14px; color: #123274; font-size: 19px; font-weight: 800; }
+.phone-message { margin-top: 18px; padding: 12px; border: 1px solid #dfe6f1; background: white; font-size: 12px; line-height: 1.55; }
+.phone-channel { display: flex; justify-content: space-between; margin-top: 16px; font-size: 11px; }
+.phone-send { margin-top: 14px; padding: 10px 6px; background: #123274; color: white; text-align: center; font-size: 11px; font-weight: 700; }
+.phone-manual { margin-top: 12px; color: #35445c; font-size: 10px; line-height: 1.4; }
+.landing-incentive { position: fixed; z-index: 50; right: 20px; bottom: 20px; width: 360px; padding: 20px; border: 1px solid #cbd5e1; background: white; color: #122033; box-shadow: 0 12px 40px rgb(15 23 42 / 24%); }
+.landing-incentive-close { position: absolute; right: 8px; top: 8px; width: 44px; height: 44px; border: 0; background: transparent; color: #122033; font-size: 26px; }
+
+@media (min-width: 768px) {
+  .landing-hero-gradient { background: linear-gradient(90deg, rgb(11 31 77 / 96%) 0%, rgb(11 31 77 / 90%) 40%, rgb(11 31 77 / 35%) 75%, transparent 100%); }
+  .landing-hero-copy > div { background: rgb(11 31 77 / 78%); }
+}
+
+@media (max-width: 767px) {
+  .landing-hero { height: 100svh; min-height: 0; }
+  .landing-hero-image { height: 40%; }
+  .landing-hero-copy { padding-top: 1rem; padding-bottom: 1.5rem; }
+  .landing-hero-copy > div { padding: 1rem; background: rgb(11 31 77 / 88%); backdrop-filter: blur(4px); }
+  .phone-stack { min-height: 440px; }
+  .phone-frame { width: min(68%, 245px); border-width: 7px !important; border-radius: 30px !important; }
+  .phone-frame-primary { left: 15%; transform: perspective(1200px) rotateY(-6deg) rotateX(2deg) rotate(1deg); }
+  .phone-frame-secondary { display: none; }
+  .landing-incentive { right: 0; bottom: 0; left: 0; width: 100%; max-height: 30svh; overflow-y: auto; padding: 16px; padding-right: 60px; border-width: 1px 0 0; }
+  .landing-incentive-close { right: 6px; top: 6px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-reveal, .landing-reveal-pending, .landing-reveal-visible, .phone-frame { opacity: 1 !important; transform: none !important; transition: none !important; }
+}

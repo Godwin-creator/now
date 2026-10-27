@@ -1,5 +1,22 @@
 # Supabase : configuration P1
 
+## Modèle d’e-mail de récupération
+
+Dans Supabase, ouvrez **Authentication → Email Templates → Reset Password** et
+utilisez le modèle de code à usage unique avec `{{ .Token }}` (six chiffres).
+L’application vérifie ce code avec `auth.verifyOtp({ type: 'recovery' })`, puis
+autorise le changement du mot de passe. Ne remplacez pas ce gabarit par un lien
+de confirmation : ce flux ne sert qu’à la récupération du compte.
+
+## Provenance des visuels
+
+- `public/landing/hero.webp` : image générée avec ChatGPT le 27 octobre 2026.
+  Elle ne contient aucun logo ni aucune marque.
+  Prompt utilisé :
+
+  > Photorealistic wide photo, 16:9, natural warm daylight. A confident West African small business owner (shopkeeper or tailor, 30s, modern and dignified) at a counter in a tidy shop, looking at a smartphone held in one hand, a notebook with handwritten invoices and a pen on the counter. Shallow depth of field, soft background blur. Composition: the person on the RIGHT third of the frame, the LEFT half calm and uncluttered (space for text overlay). Colour palette: deep navy blue and warm yellow accents in the clothing or objects. The phone screen is turned slightly away or not readable. No text, no logos, no brand names, no watermark, natural hands, no distortion.
+- Les téléphones de la section « Comment ça marche » sont rendus en HTML et CSS. Ils ne reposent sur aucune image.
+
 ## Projets et environnement
 
 Le projet `dev` sert aux migrations, essais RLS et données de test. Le projet
@@ -50,7 +67,7 @@ Dans **Authentication → URL Configuration** :
 - Définir `SITE_URL` dans l'environnement de l'application sur l'origine
   correspondante (`http://localhost:3000`, domaine canonique ou preview).
   `/auth/callback` est réservé à l'échange de code OAuth (par exemple Google) ;
-  l'inscription e-mail utilise un code à 8 chiffres et ne dépend pas de cette
+  l'inscription e-mail utilise un code à 6 chiffres et ne dépend pas de cette
   route.
 
 Dans **Authentication → Providers → Email** :

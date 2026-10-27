@@ -104,13 +104,13 @@ export default function VerifyCodeForm({
             type="text"
             inputMode="numeric"
             autoComplete="one-time-code"
-            pattern="[0-9]{8}"
-            minLength={8}
-            maxLength={8}
+            pattern="[0-9]{6}"
+            minLength={6}
+            maxLength={6}
             required
             value={code}
             onChange={(event) =>
-              setCode(event.target.value.replace(/\D/g, '').slice(0, 8))
+              setCode(event.target.value.replace(/\D/g, '').slice(0, 6))
             }
             className="w-full rounded border border-gray-300 px-3 py-3 text-center text-2xl tracking-[0.5em]"
           />

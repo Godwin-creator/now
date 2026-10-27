@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { annulerPaiement } from '@/app/actions/paiements'
 import { AlertCircle, CheckCircle, ClipboardList } from 'lucide-react'
 import { formatFcfa, type CreanceEnrichie } from '@/lib/domain'
-import DashboardTodayCard from './DashboardTodayCard'
+import DashboardTodayCard from './DashboardTodayCardInteractive'
 import PaymentSheet from './PaymentSheet'
 
 export default function DashboardClientCore({

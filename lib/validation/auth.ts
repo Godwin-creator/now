@@ -9,7 +9,7 @@ export const signUpSchema = z.object({
 
 export const signupCodeSchema = z.object({
   email: z.string().trim().email().max(254),
-  code: z.string().trim().regex(/^\d{8}$/),
+  code: z.string().trim().regex(/^\d{6}$/),
 })
 
 export const companyNameSchema = z.string().trim().min(1).max(120)

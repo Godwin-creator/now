@@ -18,9 +18,9 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   invalid_credentials: 'Adresse e-mail ou mot de passe incorrect.',
   otp_expired: 'Ce code a expiré. Demandez-en un nouveau.',
   invalid_otp:
-    'Ce code est invalide. Vérifiez les huit chiffres reçus par e-mail.',
+'Ce code est invalide. Vérifiez les six chiffres reçus par e-mail.',
   validation_failed:
-    'Ce code est invalide ou expiré. Vérifiez les huit chiffres ou demandez-en un nouveau.',
+'Ce code est invalide ou expiré. Vérifiez les six chiffres ou demandez-en un nouveau.',
   user_already_exists:
     'Un compte existe déjà avec cette adresse e-mail. Connectez-vous.',
   email_exists:

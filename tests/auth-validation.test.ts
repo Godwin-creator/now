@@ -37,17 +37,17 @@ describe('validation de l’inscription', () => {
     expect(companyNameSchema.safeParse('x'.repeat(121)).success).toBe(false);
   });
 
-  it('accepte exactement huit chiffres pour le code OTP reçu par e-mail', () => {
+  it('accepte exactement six chiffres pour le code OTP reçu par e-mail', () => {
     expect(
       signupCodeSchema.safeParse({
         email: 'gerant@example.com',
-        code: '43712208',
+        code: '437122',
       }).success,
     ).toBe(true);
     expect(
       signupCodeSchema.safeParse({
         email: 'gerant@example.com',
-        code: '437122',
+        code: '43712208',
       }).success,
     ).toBe(false);
     expect(

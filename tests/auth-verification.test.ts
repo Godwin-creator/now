@@ -34,7 +34,7 @@ describe('verifySignupCode', () => {
       verifySignupCode('gerant@example.com', '12ab'),
     ).resolves.toEqual({
       ok: false,
-      error: { code: 'VALIDATION', message: 'Saisissez une adresse e-mail valide et le code à 8 chiffres.' },
+      error: { code: 'VALIDATION', message: 'Saisissez une adresse e-mail valide et le code à 6 chiffres.' },
     });
     expect(mocks.createServerClient).not.toHaveBeenCalled();
   });
@@ -43,7 +43,7 @@ describe('verifySignupCode', () => {
     {
       code: 'invalid_otp',
       expected:
-        'Ce code est invalide. Vérifiez les huit chiffres reçus par e-mail.',
+        'Ce code est invalide. Vérifiez les six chiffres reçus par e-mail.',
     },
     {
       code: 'otp_expired',
@@ -58,11 +58,11 @@ describe('verifySignupCode', () => {
     mocks.createServerClient.mockResolvedValue(supabase);
 
     await expect(
-      verifySignupCode('gerant@example.com', '12345678'),
+      verifySignupCode('gerant@example.com', '123456'),
     ).resolves.toEqual({ ok: false, error: { code, message: expected } });
     expect(verifyOtp).toHaveBeenCalledWith({
       email: 'gerant@example.com',
-      token: '12345678',
+      token: '123456',
       type: 'signup',
     });
   });

@@ -60,7 +60,7 @@ export async function verifySignupCode(
 ): Promise<Result<null>> {
   const parsed = signupCodeSchema.safeParse({ email, code });
   if (!parsed.success) {
-    return failure('VALIDATION', 'Saisissez une adresse e-mail valide et le code à 8 chiffres.');
+    return failure('VALIDATION', 'Saisissez une adresse e-mail valide et le code à 6 chiffres.');
   }
 
   try {
