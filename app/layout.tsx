@@ -27,8 +27,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: '/images/social/nowpay-open-graph.png',
-        width: 1200,
-        height: 630,
+        width: 1732,
+        height: 908,
         alt: 'NowPay, suivi des factures impayées',
       },
     ],

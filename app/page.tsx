@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: 'NowPay — Suivi et relance de factures impayées pour PME',
   description: "NowPay aide les PME à voir qui relancer aujourd'hui et à préparer un message de relance à envoyer elles-mêmes.",
   alternates: { canonical: '/' },
-  openGraph: { title: 'NowPay — Suivi et relance de factures impayées pour PME', description: "Suivez vos factures et préparez vos relances.", url: '/', siteName: 'NowPay', locale: 'fr_FR', type: 'website', images: [{ url: '/images/social/nowpay-open-graph.png', width: 1200, height: 630, alt: 'NowPay' }] },
+  openGraph: { title: 'NowPay — Suivi et relance de factures impayées pour PME', description: "Suivez vos factures et préparez vos relances.", url: '/', siteName: 'NowPay', locale: 'fr_FR', type: 'website', images: [{ url: '/images/social/nowpay-open-graph.png', width: 1732, height: 908, alt: 'NowPay' }] },
 }
 
 const faqs = [
