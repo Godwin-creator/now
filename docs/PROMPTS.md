@@ -32,7 +32,7 @@ Tâches :
    [commentaire : réservé au cron], SITE_URL) sans valeurs. Ne lis jamais `.env.local`.
 3. Réécris `README.md` : description, stack, installation, variables, scripts, lien vers docs/REFERENCE.md.
 4. Déplace `Now - Cahier des charges.md` vers `docs/CDC.md` et supprime l'image base64 intégrée
-   (remplace-la par une mention « logo : public/logo-nowpay.png »).
+   (remplace-la par une mention « logo : public/images/brand/nowpay-logo.png »).
 5. Ajoute le middleware d'authentification (convention Next de cette version : vérifie dans
    node_modules/next/dist/docs/ le nom exact du fichier). Il rafraîchit la session Supabase (@supabase/ssr)
    et redirige `/dashboard/*` vers `/login` si `getUser()` échoue. Ajoute `requireUser()` dans

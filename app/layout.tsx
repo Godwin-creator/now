@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/opengraph-image.png',
+        url: '/images/social/nowpay-open-graph.png',
         width: 1200,
         height: 630,
         alt: 'NowPay, suivi des factures impayées',
@@ -38,11 +38,11 @@ export const metadata: Metadata = {
     title: 'NowPay — Suivi et relance de factures impayées pour PME',
     description:
       'Suivez vos factures impayées et préparez vos messages de relance.',
-    images: ['/opengraph-image.png'],
+    images: ['/images/social/nowpay-open-graph.png'],
   },
   icons: {
-    icon: '/logo-nowpay.png',
-    apple: '/logo-nowpay.png',
+    icon: '/images/brand/nowpay-logo.png',
+    apple: '/images/brand/nowpay-logo.png',
   },
 };
 

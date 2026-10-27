@@ -10,7 +10,7 @@ export const structuredData = {
       '@type': 'Organization',
       name: 'NowPay',
       url: 'https://www.nowpay.website',
-      logo: 'https://www.nowpay.website/logo-nowpay.png',
+      logo: 'https://www.nowpay.website/images/brand/nowpay-logo.png',
       description: disambiguation,
     },
     {
@@ -47,7 +47,7 @@ export function publicPageMetadata(
   description: string,
 ): Metadata {
   const image = {
-    url: '/opengraph-image.png',
+    url: '/images/social/nowpay-open-graph.png',
     width: 1200,
     height: 630,
     alt: 'NowPay, suivi des factures impayées',
@@ -70,7 +70,7 @@ export function publicPageMetadata(
       card: 'summary_large_image',
       title: `${title} | NowPay`,
       description,
-      images: ['/opengraph-image.png'],
+    images: ['/images/social/nowpay-open-graph.png'],
     },
   };
 }

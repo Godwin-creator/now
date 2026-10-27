@@ -10,7 +10,7 @@ de confirmation : ce flux ne sert qu’à la récupération du compte.
 
 ## Provenance des visuels
 
-- `public/landing/hero.webp` : image générée avec ChatGPT le 27 octobre 2026.
+- `public/images/landing/hero.webp` : image générée avec ChatGPT le 27 octobre 2026.
   Elle ne contient aucun logo ni aucune marque.
   Prompt utilisé :
 

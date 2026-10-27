@@ -64,7 +64,7 @@ export default function Sidebar({ companyName }: { companyName: string }) {
           <div className="mb-10 px-0">
             <div className="flex items-center justify-center rounded-2xl bg-white/5 p-2.5 shadow-inner ring-1 ring-white/10 overflow-hidden">
               <Image
-                src="/logo-nowpay.png"
+                src="/images/brand/nowpay-logo.png"
                 alt="NowPay logo"
                 width={300}
                 height={110}

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: 'NowPay — Suivi et relance de factures impayées pour PME',
   description: "NowPay aide les PME à voir qui relancer aujourd'hui et à préparer un message de relance à envoyer elles-mêmes.",
   alternates: { canonical: '/' },
-  openGraph: { title: 'NowPay — Suivi et relance de factures impayées pour PME', description: "Suivez vos factures et préparez vos relances.", url: '/', siteName: 'NowPay', locale: 'fr_FR', type: 'website', images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: 'NowPay' }] },
+  openGraph: { title: 'NowPay — Suivi et relance de factures impayées pour PME', description: "Suivez vos factures et préparez vos relances.", url: '/', siteName: 'NowPay', locale: 'fr_FR', type: 'website', images: [{ url: '/images/social/nowpay-open-graph.png', width: 1200, height: 630, alt: 'NowPay' }] },
 }
 
 const faqs = [
@@ -29,14 +29,14 @@ export default async function Home() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(structuredData) }} />
       <header className="absolute inset-x-0 top-0 z-20 mx-auto max-w-6xl px-4 py-3 sm:px-6">
         <nav aria-label="Navigation principale" className="flex items-center justify-between gap-3 border border-white/25 bg-[#0b1f4d]/75 p-3 text-white shadow-lg backdrop-blur-sm">
-          <Link href="/" aria-label="NowPay, accueil" className="inline-flex bg-white px-2 py-1"><Image src="/logo-nowpay.png" alt="NowPay" width={180} height={72} className="h-10 w-auto object-contain" /></Link>
+          <Link href="/" aria-label="NowPay, accueil" className="inline-flex bg-white px-2 py-1"><Image src="/images/brand/nowpay-logo.png" alt="NowPay" width={180} height={72} className="h-10 w-auto object-contain" /></Link>
           <div className="hidden items-center gap-6 text-sm font-semibold md:flex"><a href="#comment-ca-marche">Comment ça marche</a><a href="#faq">FAQ</a></div>
           <div className="flex items-center gap-2"><Link href="/login" className="inline-flex min-h-11 items-center px-3 text-sm font-semibold">Se connecter</Link><Link href="/login?mode=signup" className="inline-flex min-h-11 items-center bg-yellow-400 px-4 text-sm font-bold text-slate-950">Commencer</Link></div>
         </nav>
       </header>
 
       <section className="landing-hero relative flex min-h-[min(760px,100svh)] items-end overflow-hidden bg-[#0b1f4d] pt-24 text-white md:items-center md:pt-20">
-        <div className="landing-hero-image absolute inset-x-0 top-0 h-full md:h-full"><Image src="/landing/hero.webp" alt="" fill fetchPriority="high" loading="eager" sizes="100vw" className="object-cover" /></div>
+        <div className="landing-hero-image absolute inset-x-0 top-0 h-full md:h-full"><Image src="/images/landing/hero.webp" alt="" fill fetchPriority="high" loading="eager" sizes="100vw" className="object-cover" /></div>
         <div className="landing-hero-gradient absolute inset-0" />
         <div className="landing-hero-copy relative z-10 mx-auto w-full max-w-6xl px-5 pb-10 pt-24 md:py-24">
           <div className="max-w-2xl">

@@ -4,7 +4,7 @@ Présentation finale · Lomé Summer School en IA 2026
 
 Nom du projet : Now
 
-Logo : public/logo-nowpay.png
+Logo : public/images/brand/nowpay-logo.png
 
 Slogan : “Relancez juste. Récupérez vite."&nbsp;
 
@@ -199,4 +199,4 @@ Cordialement,
 
 *Document de travail — Lomé Summer School en IA 2026*
 
-logo : public/logo-nowpay.png
+logo : public/images/brand/nowpay-logo.png
